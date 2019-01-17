@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sshcert (0.0.1)
+    ssh_data (0.0.1)
 
 GEM
   remote: https://rubygems.org/
@@ -35,7 +35,7 @@ DEPENDENCIES
   pry (~> 0.10.4)
   rspec (~> 3.5.0)
   rspec-mocks (~> 3.5.0)
-  sshcert!
+  ssh_data!
 
 BUNDLED WITH
    2.0.1

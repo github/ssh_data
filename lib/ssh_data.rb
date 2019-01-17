@@ -1,7 +1,7 @@
-require "sshcert/error"
-require "sshcert/encoding"
+require "ssh_data/error"
+require "ssh_data/encoding"
 
-class SSHCert
+class SSHData
   TYPE_USER = 1
   TYPE_HOST = 2
 

@@ -1,7 +1,7 @@
 require "openssl"
 require "base64"
 
-class SSHCert
+class SSHData
   module Encoding
     # Decode a certificate.
     #
@@ -18,7 +18,7 @@ class SSHCert
       type, _ = read_string(cert_raw)
 
       hash, total_read = case type
-      when SSHCert::RSA_CERT_TYPE
+      when SSHData::RSA_CERT_TYPE
         decode_all(cert_raw, [
           [:key_type,         :string],
           [:nonce,            :string],
@@ -35,7 +35,7 @@ class SSHCert
           [:reserved,         :string],
           [:signature_key,    :string],
         ])
-      when SSHCert::DSA_CERT_TYPE
+      when SSHData::DSA_CERT_TYPE
         decode_all(cert_raw, [
           [:key_type,         :string],
           [:nonce,            :string],
@@ -54,7 +54,7 @@ class SSHCert
           [:reserved,         :string],
           [:signature_key,    :string],
         ])
-      when *SSHCert::ECDSA_CERT_TYPES
+      when *SSHData::ECDSA_CERT_TYPES
         decode_all(cert_raw, [
           [:key_type,         :string],
           [:nonce,            :string],
@@ -71,7 +71,7 @@ class SSHCert
           [:reserved,         :string],
           [:signature_key,    :string],
         ])
-      when SSHCert::ED25519_CERT_TYPE
+      when SSHData::ED25519_CERT_TYPE
         decode_all(cert_raw, [
           [:key_type,         :string],
           [:nonce,            :string],
@@ -129,7 +129,7 @@ class SSHCert
         when :uint32
           read_uint32(data, offset + total_read)
         else
-          raise SSHCert::DecodeError
+          raise SSHData::DecodeError
         end
 
         hash[key] = value
@@ -148,7 +148,7 @@ class SSHCert
     # bytes read.
     def read_string(data, offset=0)
       if data.bytesize < offset + 4
-        raise SSHCert::DecodeError, "data too short"
+        raise SSHData::DecodeError, "data too short"
       end
 
       size_s = data.byteslice(offset, 4)
@@ -156,7 +156,7 @@ class SSHCert
       size = size_s.unpack("L>").first
 
       if data.bytesize < offset + 4 + size
-        raise SSHCert::DecodeError, "data too short"
+        raise SSHData::DecodeError, "data too short"
       end
 
       string = data.byteslice(offset + 4, size)
@@ -173,7 +173,7 @@ class SSHCert
     # Integer number of bytes read.
     def read_mpint(data, offset=0)
       if data.bytesize < offset + 4
-        raise SSHCert::DecodeError, "data too short"
+        raise SSHData::DecodeError, "data too short"
       end
 
       str_size_s = data.byteslice(offset, 4)
@@ -181,7 +181,7 @@ class SSHCert
       mpi_size = str_size + 4
 
       if data.bytesize < offset + mpi_size
-        raise SSHCert::DecodeError, "data too short"
+        raise SSHData::DecodeError, "data too short"
       end
 
       mpi_s = data.slice(offset, mpi_size)
@@ -204,7 +204,7 @@ class SSHCert
     # Integer number of bytes read.
     def read_uint64(data, offset=0)
       if data.bytesize < offset + 8
-        raise SSHCert::DecodeError, "data too short"
+        raise SSHData::DecodeError, "data too short"
       end
 
       uint64 = data.byteslice(offset, 8).unpack("Q>").first
@@ -221,7 +221,7 @@ class SSHCert
     # Integer number of bytes read.
     def read_uint32(data, offset=0)
       if data.bytesize < offset + 4
-        raise SSHCert::DecodeError, "data too short"
+        raise SSHData::DecodeError, "data too short"
       end
 
       uint32 = data.byteslice(offset, 4).unpack("L>").first

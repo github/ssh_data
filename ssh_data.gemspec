@@ -1,6 +1,6 @@
 
 Gem::Specification.new do |s|
-  s.name    = "sshcert"
+  s.name    = "ssh_data"
   s.summary = "Library for parsing SSH certificates"
   s.version = "0.0.1"
   s.authors = ["mastahyeti"]

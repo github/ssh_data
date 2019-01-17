@@ -1,4 +1,4 @@
-require "sshcert"
+require "ssh_data"
 
 REPO_PATH    = File.expand_path(File.join(__FILE__, "..", ".."))
 FIXTURE_PATH = File.expand_path(File.join(REPO_PATH, "spec", "fixtures"))

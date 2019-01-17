@@ -1,6 +1,6 @@
 require_relative "./spec_helper"
 
-describe SSHCert::Encoding do
+describe SSHData::Encoding do
   let(:rsa_cert)     { described_class.decode_cert(fixture("rsa_leaf_for_rsa_ca-cert.pub")) }
   let(:dsa_cert)     { described_class.decode_cert(fixture("dsa_leaf_for_rsa_ca-cert.pub")) }
   let(:ecdsa_cert)   { described_class.decode_cert(fixture("ecdsa_leaf_for_rsa_ca-cert.pub")) }
@@ -13,7 +13,7 @@ describe SSHCert::Encoding do
 
   it "can decode RSA certificates" do
     expect(rsa_cert[:key_type]).to be_a(String)
-    expect(rsa_cert[:key_type]).to eq(SSHCert::RSA_CERT_TYPE)
+    expect(rsa_cert[:key_type]).to eq(SSHData::RSA_CERT_TYPE)
 
     expect(rsa_cert[:nonce]).to be_a(String)
     expect(rsa_cert[:nonce].length).to eq(32)
@@ -28,7 +28,7 @@ describe SSHCert::Encoding do
     expect(rsa_cert[:serial]).to eq(123)
 
     expect(rsa_cert[:type]).to be_a(Integer)
-    expect(rsa_cert[:type]).to eq(SSHCert::TYPE_USER)
+    expect(rsa_cert[:type]).to eq(SSHData::TYPE_USER)
 
     expect(rsa_cert[:key_id]).to be_a(String)
     expect(rsa_cert[:key_id]).to eq("my-ident")
@@ -61,7 +61,7 @@ describe SSHCert::Encoding do
 
   it "can decode DSA certificates" do
     expect(dsa_cert[:key_type]).to be_a(String)
-    expect(dsa_cert[:key_type]).to eq(SSHCert::DSA_CERT_TYPE)
+    expect(dsa_cert[:key_type]).to eq(SSHData::DSA_CERT_TYPE)
 
     expect(dsa_cert[:nonce]).to be_a(String)
     expect(dsa_cert[:nonce].length).to eq(32)
@@ -82,7 +82,7 @@ describe SSHCert::Encoding do
     expect(dsa_cert[:serial]).to eq(123)
 
     expect(dsa_cert[:type]).to be_a(Integer)
-    expect(dsa_cert[:type]).to eq(SSHCert::TYPE_USER)
+    expect(dsa_cert[:type]).to eq(SSHData::TYPE_USER)
 
     expect(dsa_cert[:key_id]).to be_a(String)
     expect(dsa_cert[:key_id]).to eq("my-ident")
@@ -115,7 +115,7 @@ describe SSHCert::Encoding do
 
   it "can decode ECDSA certificates" do
     expect(ecdsa_cert[:key_type]).to be_a(String)
-    expect(ecdsa_cert[:key_type]).to eq(SSHCert::ECDSA_SHA2_NISTP256_CERT_TYPE)
+    expect(ecdsa_cert[:key_type]).to eq(SSHData::ECDSA_SHA2_NISTP256_CERT_TYPE)
 
     expect(ecdsa_cert[:nonce]).to be_a(String)
     expect(ecdsa_cert[:nonce].length).to eq(32)
@@ -130,7 +130,7 @@ describe SSHCert::Encoding do
     expect(ecdsa_cert[:serial]).to eq(123)
 
     expect(ecdsa_cert[:type]).to be_a(Integer)
-    expect(ecdsa_cert[:type]).to eq(SSHCert::TYPE_USER)
+    expect(ecdsa_cert[:type]).to eq(SSHData::TYPE_USER)
 
     expect(ecdsa_cert[:key_id]).to be_a(String)
     expect(ecdsa_cert[:key_id]).to eq("my-ident")
@@ -163,7 +163,7 @@ describe SSHCert::Encoding do
 
   it "can decode ED25519 certificates" do
     expect(ed25519_cert[:key_type]).to be_a(String)
-    expect(ed25519_cert[:key_type]).to eq(SSHCert::ED25519_CERT_TYPE)
+    expect(ed25519_cert[:key_type]).to eq(SSHData::ED25519_CERT_TYPE)
 
     expect(ed25519_cert[:nonce]).to be_a(String)
     expect(ed25519_cert[:nonce].length).to eq(32)
@@ -175,7 +175,7 @@ describe SSHCert::Encoding do
     expect(ed25519_cert[:serial]).to eq(123)
 
     expect(ed25519_cert[:type]).to be_a(Integer)
-    expect(ed25519_cert[:type]).to eq(SSHCert::TYPE_USER)
+    expect(ed25519_cert[:type]).to eq(SSHData::TYPE_USER)
 
     expect(ed25519_cert[:key_id]).to be_a(String)
     expect(ed25519_cert[:key_id]).to eq("my-ident")
