@@ -17,7 +17,7 @@ class SSHCert
       cert_raw = Base64.decode64(cert_b64)
       type, _ = read_string(cert_raw)
 
-      case type
+      hash, total_read = case type
       when SSHCert::RSA_CERT_TYPE
         decode_all(cert_raw, [
           [:key_type,         :string],
@@ -34,7 +34,6 @@ class SSHCert
           [:extensions,       :string],
           [:reserved,         :string],
           [:signature_key,    :string],
-          [:signature,        :string],
         ])
       when SSHCert::DSA_CERT_TYPE
         decode_all(cert_raw, [
@@ -54,7 +53,6 @@ class SSHCert
           [:extensions,       :string],
           [:reserved,         :string],
           [:signature_key,    :string],
-          [:signature,        :string],
         ])
       when *SSHCert::ECDSA_CERT_TYPES
         decode_all(cert_raw, [
@@ -72,7 +70,6 @@ class SSHCert
           [:extensions,       :string],
           [:reserved,         :string],
           [:signature_key,    :string],
-          [:signature,        :string],
         ])
       when SSHCert::ED25519_CERT_TYPE
         decode_all(cert_raw, [
@@ -89,11 +86,22 @@ class SSHCert
           [:extensions,       :string],
           [:reserved,         :string],
           [:signature_key,    :string],
-          [:signature,        :string],
         ])
       else
         raise DecodeError, "unknown cert type: #{type}"
       end
+
+      # the signature is over all data up to the signature field.
+      hash[:signed_data] = cert_raw.byteslice(0, total_read)
+
+      hash[:signature], read = read_string(cert_raw, total_read)
+      total_read += read
+
+      if cert_raw.bytesize != total_read
+        raise DecodeError, "bad data length"
+      end
+
+      hash
     end
 
     # Decode all of the given fields from data.
@@ -102,70 +110,81 @@ class SSHCert
     # fields - An Array of Arrays, each containing a symbol describing the field
     #          and a Symbol describing the type of the field (:mpint, :string,
     #          :uint64, or :uint32).
+    # offset - The offset into data at which to read (default 0).
     #
-    # Returns a Hash mapping the provide field keys to the decoded values.
-    def decode_all(data, fields)
-      fields.each_with_object({}) do |(key, type), result|
-        case type
+    # Returns an Array containing a Hash mapping the provided field keys to the
+    # decoded values and the Integer number of bytes read.
+    def decode_all(data, fields, offset=0)
+      hash = {}
+      total_read = 0
+
+      fields.each do |key, type|
+        value, read = case type
         when :string
-          string, data = read_string(data)
-          result[key] = string
+          read_string(data, offset + total_read)
         when :mpint
-          mpint, data = read_mpint(data)
-          result[key] = mpint
+          read_mpint(data, offset + total_read)
         when :uint64
-          uint64, data = read_uint64(data)
-          result[key] = uint64
+          read_uint64(data, offset + total_read)
         when :uint32
-          uint32, data = read_uint32(data)
-          result[key] = uint32
+          read_uint32(data, offset + total_read)
         else
           raise SSHCert::DecodeError
         end
+
+        hash[key] = value
+        total_read += read
       end
+
+      [hash, total_read]
     end
 
     # Read a string out of the provided data.
     #
-    # data - A binary String.
+    # data   - A binary String.
+    # offset - The offset into data at which to read (default 0).
     #
-    # Returns an Array including the decoded String and the remaining binary
-    # String data.
-    def read_string(data)
-      if data.bytesize < 4
+    # Returns an Array including the decoded String and the Integer number of
+    # bytes read.
+    def read_string(data, offset=0)
+      if data.bytesize < offset + 4
         raise SSHCert::DecodeError, "data too short"
       end
 
-      size_s, data = data.byteslice(0...4), data.byteslice(4..-1)
+      size_s = data.byteslice(offset, 4)
+
       size = size_s.unpack("L>").first
 
-      if data.bytesize < size
+      if data.bytesize < offset + 4 + size
         raise SSHCert::DecodeError, "data too short"
       end
 
-      [data.byteslice(0...size), data.byteslice(size..-1)]
+      string = data.byteslice(offset + 4, size)
+
+      [string, 4 + size]
     end
 
     # Read a multi-precision integer from the provided data.
     #
-    # data - A binary String.
+    # data   - A binary String.
+    # offset - The offset into data at which to read (default 0).
     #
     # Returns an Array including the decoded mpint as an OpenSSL::BN and the
-    # remaining binary String data.
-    def read_mpint(data)
-      if data.bytesize < 4
+    # Integer number of bytes read.
+    def read_mpint(data, offset=0)
+      if data.bytesize < offset + 4
         raise SSHCert::DecodeError, "data too short"
       end
 
-      str_size_s = data.byteslice(0...4)
-      str_size = str_size_s.unpack("N").first
+      str_size_s = data.byteslice(offset, 4)
+      str_size = str_size_s.unpack("L>").first
       mpi_size = str_size + 4
 
-      if data.bytesize < mpi_size
+      if data.bytesize < offset + mpi_size
         raise SSHCert::DecodeError, "data too short"
       end
 
-      mpi_s, data = data.slice(0...mpi_size), data.slice(mpi_size..-1)
+      mpi_s = data.slice(offset, mpi_size)
 
       # This calls OpenSSL's BN_mpi2bn() function. As far as I can tell, this
       # matches up with with MPI type defined in RFC4251 Section 5 with the
@@ -173,35 +192,41 @@ class SSHCert
       # this ourselves, but it doesn't seem worth the added complexity.
       mpi = OpenSSL::BN.new(mpi_s, 0)
 
-      [mpi, data]
+      [mpi, mpi_size]
     end
 
     # Read a uint64 from the provided data.
     #
-    # data - A binary String.
+    # data   - A binary String.
+    # offset - The offset into data at which to read (default 0).
     #
     # Returns an Array including the decoded uint64 as an Integer and the
-    # remaining binary String data.
-    def read_uint64(data)
-      if data.bytesize < 8
+    # Integer number of bytes read.
+    def read_uint64(data, offset=0)
+      if data.bytesize < offset + 8
         raise SSHCert::DecodeError, "data too short"
       end
 
-      data.unpack("Q>a*")
+      uint64 = data.byteslice(offset, 8).unpack("Q>").first
+
+      [uint64, 8]
     end
 
     # Read a uint32 from the provided data.
     #
-    # data - A binary String.
+    # data   - A binary String.
+    # offset - The offset into data at which to read (default 0).
     #
     # Returns an Array including the decoded uint32 as an Integer and the
-    # remaining binary String data.
-    def read_uint32(data)
-      if data.bytesize < 4
+    # Integer number of bytes read.
+    def read_uint32(data, offset=0)
+      if data.bytesize < offset + 4
         raise SSHCert::DecodeError, "data too short"
       end
 
-      data.unpack("L>a*")
+      uint32 = data.byteslice(offset, 4).unpack("L>").first
+
+      [uint32, 4]
     end
 
     extend self
