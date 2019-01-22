@@ -11,17 +11,19 @@ class SSHData::Certificate
   ALGO_ECDSA521 = "ecdsa-sha2-nistp521-cert-v01@openssh.com"
   ALGO_ED25519  = "ssh-ed25519-cert-v01@openssh.com"
 
-  attr_reader :algo, :nonce, :key_data, :serial, :type, :key_id,
+  attr_reader :algo, :nonce, :public_key, :serial, :type, :key_id,
               :valid_principals, :valid_after, :valid_before, :critical_options,
-              :extensions, :reserved, :signature_key, :signature, :signed_data
+              :extensions, :reserved, :ca_key, :signature
 
   # Parse an SSH certificate.
   #
-  # cert - An SSH formatted certificate, including key algo, encoded key and
-  #        optional user/host names.
+  # cert              - An SSH formatted certificate, including key algo,
+  #                     encoded key and optional user/host names.
+  # unsafe_no_verify: - Bool of whether to skip verifying certificate signature
+  #                     (Default false)
   #
   # Returns a Certificate instance.
-  def self.parse(cert)
+  def self.parse(cert, unsafe_no_verify: false)
     algo, b64, _ = cert.split(" ", 3)
     if algo.nil? || b64.nil?
       raise SSHData::DecodeError, "bad certificate format"
@@ -41,11 +43,23 @@ class SSHData::Certificate
     # Parse data into better types, where possible.
     data[:valid_after]  = Time.at(data[:valid_after])
     data[:valid_before] = Time.at(data[:valid_before])
+    data[:public_key]   = SSHData::PublicKey.from_data(data.delete(:key_data))
 
-    # The signature is the last field. The signature is calculated over all
-    # preceding data.
-    signed_data_len = raw.bytesize - data[:signature].bytesize
-    data[:signed_data] = raw.byteslice(0, signed_data_len)
+    # The signature key is encoded as a string, but we can parse it.
+    sk_raw = data.delete(:signature_key)
+    sk_data, read = SSHData::Encoding.decode_public_key(sk_raw)
+    if read != sk_raw.bytesize
+      raise SSHData::DecodeError, "unexpected trailing data"
+    end
+    data[:ca_key] = SSHData::PublicKey.from_data(sk_data)
+
+    unless unsafe_no_verify
+      # The signature is the last field. The signature is calculated over all
+      # preceding data.
+      signed_data_len = raw.bytesize - data[:signature].bytesize
+      signed_data = raw.byteslice(0, signed_data_len)
+      data[:ca_key].verify(signed_data, data[:signature])
+    end
 
     new(**data)
   end
@@ -56,7 +70,8 @@ class SSHData::Certificate
   #                     ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
   #                     or ALGO_ED25519)
   # nonce:            - The certificate's String nonce field.
-  # key_data:         - Hash of key-type-specific data for public key.
+  # public_key:       - The certificate's public key as an PublicKey::Base
+  #                     subclass instance.
   # serial:           - The certificate's Integer serial field.
   # type:             - The certificate's Integer type field (one of TYPE_USER
   #                     or TYPE_HOST).
@@ -67,17 +82,15 @@ class SSHData::Certificate
   # critical_options: - The certificate's String critical_options field.
   # extensions:       - The certificate's String extensions field.
   # reserved:         - The certificate's String reserved field.
-  # signature_key:    - The certificate's String signature_key field.
+  # ca_key:           - The issuing CA's public key as a PublicKey::Base
+  #                     subclass instance.
   # signature:        - The certificate's String signature field.
-  # signed_data:      - The String data over which the signature was calculated.
-  #                     This isn't an actual field in the certificate, but is
-  #                     calculated during parsing.
   #
   # Returns nothing.
-  def initialize(algo:, nonce:, key_data:, serial:, type:, key_id:, valid_principals:, valid_after:, valid_before:, critical_options:, extensions:, reserved:, signature_key:, signature:, signed_data:)
+  def initialize(algo:, nonce:, public_key:, serial:, type:, key_id:, valid_principals:, valid_after:, valid_before:, critical_options:, extensions:, reserved:, ca_key:, signature:)
     @algo = algo
     @nonce = nonce
-    @key_data = key_data
+    @public_key = public_key
     @serial = serial
     @type = type
     @key_id = key_id
@@ -87,8 +100,7 @@ class SSHData::Certificate
     @critical_options = critical_options
     @extensions = extensions
     @reserved = reserved
-    @signature_key = signature_key
+    @ca_key = ca_key
     @signature = signature
-    @signed_data = signed_data
   end
 end
