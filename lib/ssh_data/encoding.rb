@@ -2,100 +2,118 @@ require "openssl"
 require "base64"
 
 module SSHData::Encoding
-  # Certificate fields that come before the public key.
-  CERT_HEADER_FIELDS = [
-    [:type_string, :string],
-    [:nonce,       :string],
+  # Fields in an RSA public key
+  RSA_KEY_FIELDS = [
+    [:e, :mpint],
+    [:n, :mpint]
   ]
 
-  # Certificate fields that come after the public key.
-  CERT_TRAILER_FIELDS = [
-    [:serial,           :uint64],
-    [:type,             :uint32],
-    [:key_id,           :string],
-    [:valid_principals, :string],
-    [:valid_after,      :uint64],
-    [:valid_before,     :uint64],
-    [:critical_options, :string],
-    [:extensions,       :string],
-    [:reserved,         :string],
-    [:signature_key,    :string],
+  # Fields in a DSA public key
+  DSA_KEY_FIELDS = [
+    [:p, :mpint],
+    [:q, :mpint],
+    [:g, :mpint],
+    [:y, :mpint]
   ]
 
-  # The fields describing the public key for each type of certificate.
-  KEY_FIELDS_BY_CERT_TYPE = {
-    SSHData::Certificate::RSA_CERT_TYPE => [
-      [:e, :mpint],
-      [:n, :mpint]
-    ],
-    SSHData::Certificate::DSA_CERT_TYPE => [
-      [:p, :mpint],
-      [:q, :mpint],
-      [:g, :mpint],
-      [:y, :mpint]
-    ],
-    SSHData::Certificate::ECDSA_SHA2_NISTP256_CERT_TYPE => [
-      [:curve,      :string],
-      [:public_key, :string]
-    ],
-    SSHData::Certificate::ECDSA_SHA2_NISTP384_CERT_TYPE => [
-      [:curve,      :string],
-      [:public_key, :string]
-    ],
-    SSHData::Certificate::ECDSA_SHA2_NISTP521_CERT_TYPE => [
-      [:curve,      :string],
-      [:public_key, :string]
-    ],
-    SSHData::Certificate::ED25519_CERT_TYPE => [
-      [:pk, :string]
-    ]
+  # Fields in an ECDSA public key
+  ECDSA_KEY_FIELDS = [
+    [:curve,      :string],
+    [:public_key, :string]
+  ]
+
+  # Fields in a ED25519 public key
+  ED25519_KEY_FIELDS = [
+    [:pk, :string]
+  ]
+
+  PUBLIC_KEY_ALGO_BY_CERT_ALGO = {
+    SSHData::Certificate::ALGO_RSA      => SSHData::PublicKey::ALGO_RSA,
+    SSHData::Certificate::ALGO_DSA      => SSHData::PublicKey::ALGO_DSA,
+    SSHData::Certificate::ALGO_ECDSA256 => SSHData::PublicKey::ALGO_ECDSA256,
+    SSHData::Certificate::ALGO_ECDSA384 => SSHData::PublicKey::ALGO_ECDSA384,
+    SSHData::Certificate::ALGO_ECDSA521 => SSHData::PublicKey::ALGO_ECDSA521,
+    SSHData::Certificate::ALGO_ED25519  => SSHData::PublicKey::ALGO_ED25519,
   }
+
+  KEY_FIELDS_BY_PUBLIC_KEY_ALGO = {
+    SSHData::PublicKey::ALGO_RSA      => RSA_KEY_FIELDS,
+    SSHData::PublicKey::ALGO_DSA      => DSA_KEY_FIELDS,
+    SSHData::PublicKey::ALGO_ECDSA256 => ECDSA_KEY_FIELDS,
+    SSHData::PublicKey::ALGO_ECDSA384 => ECDSA_KEY_FIELDS,
+    SSHData::PublicKey::ALGO_ECDSA521 => ECDSA_KEY_FIELDS,
+    SSHData::PublicKey::ALGO_ED25519  => ED25519_KEY_FIELDS,
+  }
+
+  # Decode the fields in a public key.
+  #
+  # raw    - Binary String public key as described by RFC4253 section 6.6.
+  # algo   - String public key algorithm identifier (optional).
+  # offset - Integer number of bytes into `raw` at which we should start
+  #          reading.
+  #
+  # Returns an Array containing a Hash describing the public key and the
+  # Integer number of bytes read.
+  def self.decode_public_key(raw, algo=nil, offset=0)
+    total_read = 0
+
+    if algo.nil?
+      algo, read = read_string(raw, offset + total_read)
+      total_read += read
+    end
+
+    unless fields = KEY_FIELDS_BY_PUBLIC_KEY_ALGO[algo]
+      raise SSHData::DecodeError, "unknown key algo: #{algo.inspect}"
+    end
+
+    data, read = decode_all(raw, fields, offset + total_read)
+    total_read += read
+
+    data[:algo] = algo
+
+    [data, total_read]
+  end
 
   # Decode the fields in a certificate.
   #
-  # cert - An SSH formatted certificate, including key type, encoded key and
-  #        optional user/host names.
+  # raw    - Binary String certificate as described by RFC4253 section 6.6.
+  # offset - Integer number of bytes into `raw` at which we should start
+  #          reading.
   #
-  # Returns a Hash of the certificate's fields.
-  def self.parse_certificate(cert)
-    type, cert_b64, _ = cert.split(" ")
-    if cert_b64.nil?
-      raise SSHData::DecodeError
-    elsif !KEY_FIELDS_BY_CERT_TYPE.key?(type)
-      raise SSHData::DecodeError, "unknown certificate type: #{type.inspect}"
+  # Returns an Array containing a Hash describing the certificate and the
+  # Integer number of bytes read.
+  def self.decode_certificate(raw, offset=0)
+    total_read = 0
+
+    data, read = decode_all(raw, [
+      [:algo,  :string],
+      [:nonce, :string],
+    ], offset + total_read)
+    total_read += read
+
+    unless key_algo = PUBLIC_KEY_ALGO_BY_CERT_ALGO[data[:algo]]
+      raise SSHData::DecodeError, "unknown cert algo: #{data[:algo].inspect}"
     end
 
-    cert_raw = Base64.decode64(cert_b64)
-    offset = 0
-    data = {}
+    data[:key_data], read = decode_public_key(raw, key_algo, offset + total_read)
+    total_read += read
 
-    header_data, read = decode_all(cert_raw, CERT_HEADER_FIELDS, 0)
-    offset += read
-    data.merge!(header_data)
+    trailer, read = decode_all(raw, [
+      [:serial,           :uint64],
+      [:type,             :uint32],
+      [:key_id,           :string],
+      [:valid_principals, :string],
+      [:valid_after,      :uint64],
+      [:valid_before,     :uint64],
+      [:critical_options, :string],
+      [:extensions,       :string],
+      [:reserved,         :string],
+      [:signature_key,    :string],
+      [:signature,        :string],
+    ], offset + total_read)
+    total_read += read
 
-    if type != data[:type_string]
-      raise SSHData::DecodeError, "type mismatch: #{type.inspect}!=#{data[:type_string].inspect}"
-    end
-
-    key_fields = KEY_FIELDS_BY_CERT_TYPE[type]
-    data[:key_data], read = decode_all(cert_raw, key_fields, offset)
-    offset += read
-
-    trailer_data, read = decode_all(cert_raw, CERT_TRAILER_FIELDS, offset)
-    offset += read
-    data.merge!(trailer_data)
-
-    # The signature is over all data up to the signature field. This isn't its
-    # own field, but we parse it out here so we don't have to do it later.
-    data[:signed_data] = cert_raw.byteslice(0, read)
-    data[:signature], read = read_string(cert_raw, offset)
-    offset += read
-
-    if cert_raw.bytesize != offset
-      raise SSHData::DecodeError, "bad data length"
-    end
-
-    data
+    [data.merge(trailer), total_read]
   end
 
   # Decode all of the given fields from data.

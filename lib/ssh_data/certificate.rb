@@ -1,45 +1,62 @@
 class SSHData::Certificate
-  # Integer certificate types (denotes host vs. user)
+  # Integer certificate types
   TYPE_USER = 1
   TYPE_HOST = 2
 
-  # String certificate types (denotes key type).
-  RSA_CERT_TYPE                 = "ssh-rsa-cert-v01@openssh.com"
-  DSA_CERT_TYPE                 = "ssh-dss-cert-v01@openssh.com"
-  ECDSA_SHA2_NISTP256_CERT_TYPE = "ecdsa-sha2-nistp256-cert-v01@openssh.com"
-  ECDSA_SHA2_NISTP384_CERT_TYPE = "ecdsa-sha2-nistp384-cert-v01@openssh.com"
-  ECDSA_SHA2_NISTP521_CERT_TYPE = "ecdsa-sha2-nistp521-cert-v01@openssh.com"
-  ED25519_CERT_TYPE             = "ssh-ed25519-cert-v01@openssh.com"
+  # Certificate algorithm identifiers
+  ALGO_RSA      = "ssh-rsa-cert-v01@openssh.com"
+  ALGO_DSA      = "ssh-dss-cert-v01@openssh.com"
+  ALGO_ECDSA256 = "ecdsa-sha2-nistp256-cert-v01@openssh.com"
+  ALGO_ECDSA384 = "ecdsa-sha2-nistp384-cert-v01@openssh.com"
+  ALGO_ECDSA521 = "ecdsa-sha2-nistp521-cert-v01@openssh.com"
+  ALGO_ED25519  = "ssh-ed25519-cert-v01@openssh.com"
 
-  attr_reader :type_string, :nonce, :key_data, :serial, :type, :key_id,
+  attr_reader :algo, :nonce, :key_data, :serial, :type, :key_id,
               :valid_principals, :valid_after, :valid_before, :critical_options,
               :extensions, :reserved, :signature_key, :signature, :signed_data
 
   # Parse an SSH certificate.
   #
-  # cert - An SSH formatted certificate, including key type, encoded key and
+  # cert - An SSH formatted certificate, including key algo, encoded key and
   #        optional user/host names.
   #
   # Returns a Certificate instance.
   def self.parse(cert)
-    data = SSHData::Encoding.parse_certificate(cert)
+    algo, b64, _ = cert.split(" ", 3)
+    if algo.nil? || b64.nil?
+      raise SSHData::DecodeError, "bad certificate format"
+    end
 
+    raw = Base64.decode64(b64)
+    data, read = SSHData::Encoding.decode_certificate(raw)
+
+    if read != raw.bytesize
+      raise SSHData::DecodeError, "unexpected trailing data"
+    end
+
+    if data[:algo] != algo
+      raise SSHData::DecodeError, "algo mismatch: #{data[:algo].inspect}!=#{algo.inspect}"
+    end
+
+    # Parse data into better types, where possible.
     data[:valid_after]  = Time.at(data[:valid_after])
     data[:valid_before] = Time.at(data[:valid_before])
 
-    # TODO: parse more fields, where possible
+    # The signature is the last field. The signature is calculated over all
+    # preceding data.
+    signed_data_len = raw.bytesize - data[:signature].bytesize
+    data[:signed_data] = raw.byteslice(0, signed_data_len)
 
     new(**data)
   end
 
   # Intialize a new Certificate instance.
   #
-  # type_string:      - The certificate's String type (one of RSA_CERT_TYPE,
-  #                     DSA_CERT_TYPE, ECDSA_SHA2_NISTP256_CERT_TYPE,
-  #                     ECDSA_SHA2_NISTP384_CERT_TYPE,
-  #                     ECDSA_SHA2_NISTP521_CERT_TYPE, or ED25519_CERT_TYPE)
+  # algo:             - The certificate's String algorithm id (one of ALGO_RSA,
+  #                     ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
+  #                     or ALGO_ED25519)
   # nonce:            - The certificate's String nonce field.
-  # key_data:         - Hash of key-type-speciric data for public key.
+  # key_data:         - Hash of key-type-specific data for public key.
   # serial:           - The certificate's Integer serial field.
   # type:             - The certificate's Integer type field (one of TYPE_USER
   #                     or TYPE_HOST).
@@ -57,8 +74,8 @@ class SSHData::Certificate
   #                     calculated during parsing.
   #
   # Returns nothing.
-  def initialize(type_string:, nonce:, key_data:, serial:, type:, key_id:, valid_principals:, valid_after:, valid_before:, critical_options:, extensions:, reserved:, signature_key:, signature:, signed_data:)
-    @type_string = type_string
+  def initialize(algo:, nonce:, key_data:, serial:, type:, key_id:, valid_principals:, valid_after:, valid_before:, critical_options:, extensions:, reserved:, signature_key:, signature:, signed_data:)
+    @algo = algo
     @nonce = nonce
     @key_data = key_data
     @serial = serial
