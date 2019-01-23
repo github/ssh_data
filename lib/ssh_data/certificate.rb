@@ -44,6 +44,7 @@ class SSHData::Certificate
     data[:valid_after]  = Time.at(data[:valid_after])
     data[:valid_before] = Time.at(data[:valid_before])
     data[:public_key]   = SSHData::PublicKey.from_data(data.delete(:key_data))
+    data[:valid_principals], _ = SSHData::Encoding.decode_strings(data[:valid_principals])
 
     # The signature key is encoded as a string, but we can parse it.
     sk_raw = data.delete(:signature_key)

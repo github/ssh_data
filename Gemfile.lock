@@ -33,10 +33,10 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  ed25519 (~> 1.2.4)
-  pry (~> 0.10.4)
-  rspec (~> 3.5.0)
-  rspec-mocks (~> 3.5.0)
+  ed25519 (~> 1.2)
+  pry (~> 0.10)
+  rspec (~> 3.5)
+  rspec-mocks (~> 3.5)
   ssh_data!
 
 BUNDLED WITH

@@ -212,6 +212,25 @@ module SSHData::Encoding
     [string.bytesize, string].pack("L>A*")
   end
 
+  # Read a series of strings out of the provided data.
+  #
+  # data   - A binary String.
+  #
+  # Returns an Array including the Array of decoded Strings and the Integer
+  # number of bytes read.
+  def decode_strings(data)
+    total_read = 0
+    strs = []
+
+    while data.bytesize > total_read
+      str, read = decode_string(data, total_read)
+      strs << str
+      total_read += read
+    end
+
+    [strs, total_read]
+  end
+
   # Read a multi-precision integer from the provided data.
   #
   # data   - A binary String.
