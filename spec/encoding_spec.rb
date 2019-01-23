@@ -17,6 +17,24 @@ describe SSHData::Encoding do
   let(:ecdsa_ca_data)   { described_class.decode_certificate(fixture("rsa_leaf_for_ecdsa_ca-cert.pub",   binary: true)).first }
   let(:ed25519_ca_data) { described_class.decode_certificate(fixture("rsa_leaf_for_ed25519_ca-cert.pub", binary: true)).first }
 
+  it "can decode options" do
+    opts = {"k1" => "v1", "k2" => "v2"}
+    encoded = opts.reduce("") do |cum, (k, v)|
+      cum + [
+        described_class.encode_string(k),
+        described_class.encode_string(described_class.encode_string(v))
+      ].join
+    end
+
+    decoded, read = described_class.decode_options(encoded)
+    expect(decoded).to eq(opts)
+    expect(read).to eq(encoded.bytesize)
+
+    decoded, read = described_class.decode_options("")
+    expect(decoded).to eq({})
+    expect(read).to eq(0)
+  end
+
   it "can decode a series of strings" do
     strs = %w(one two three)
     encoded = strs.map { |s| described_class.encode_string(s) }.join

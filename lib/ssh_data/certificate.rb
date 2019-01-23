@@ -41,10 +41,12 @@ class SSHData::Certificate
     end
 
     # Parse data into better types, where possible.
-    data[:valid_after]  = Time.at(data[:valid_after])
-    data[:valid_before] = Time.at(data[:valid_before])
-    data[:public_key]   = SSHData::PublicKey.from_data(data.delete(:key_data))
-    data[:valid_principals], _ = SSHData::Encoding.decode_strings(data[:valid_principals])
+    valid_after         = Time.at(data.delete(:valid_after))
+    valid_before        = Time.at(data.delete(:valid_before))
+    public_key          = SSHData::PublicKey.from_data(data.delete(:key_data))
+    valid_principals, _ = SSHData::Encoding.decode_strings(data.delete(:valid_principals))
+    critical_options, _ = SSHData::Encoding.decode_options(data.delete(:critical_options))
+    extensions, _       = SSHData::Encoding.decode_options(data.delete(:extensions))
 
     # The signature key is encoded as a string, but we can parse it.
     sk_raw = data.delete(:signature_key)
@@ -52,7 +54,7 @@ class SSHData::Certificate
     if read != sk_raw.bytesize
       raise SSHData::DecodeError, "unexpected trailing data"
     end
-    data[:ca_key] = SSHData::PublicKey.from_data(sk_data)
+    ca_key = SSHData::PublicKey.from_data(sk_data)
 
     unless unsafe_no_verify
       # The signature is the last field. The signature is calculated over all
@@ -60,12 +62,20 @@ class SSHData::Certificate
       signed_data_len = raw.bytesize - data[:signature].bytesize - 4
       signed_data = raw.byteslice(0, signed_data_len)
 
-      unless data[:ca_key].verify(signed_data, data[:signature])
+      unless ca_key.verify(signed_data, data[:signature])
         raise SSHData::VerifyError
       end
     end
 
-    new(**data)
+    new(**data.merge(
+      valid_after:      valid_after,
+      valid_before:     valid_before,
+      public_key:       public_key,
+      valid_principals: valid_principals,
+      critical_options: critical_options,
+      extensions:       extensions,
+      ca_key:           ca_key,
+    ))
   end
 
   # Intialize a new Certificate instance.
@@ -80,11 +90,12 @@ class SSHData::Certificate
   # type:             - The certificate's Integer type field (one of TYPE_USER
   #                     or TYPE_HOST).
   # key_id:           - The certificate's String key_id field.
-  # valid_principals: - The certificate's String valid_principals field.
+  # valid_principals: - The Array of Strings valid_principles field from the
+  #                     certificate.
   # valid_after:      - The certificate's Time valid_after field.
   # valid_before:     - The certificate's Time valid_before field.
-  # critical_options: - The certificate's String critical_options field.
-  # extensions:       - The certificate's String extensions field.
+  # critical_options: - The Hash critical_options field from the certificate.
+  # extensions:       - The Hash extensions field from the certificate.
   # reserved:         - The certificate's String reserved field.
   # ca_key:           - The issuing CA's public key as a PublicKey::Base
   #                     subclass instance.

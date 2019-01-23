@@ -214,7 +214,7 @@ module SSHData::Encoding
 
   # Read a series of strings out of the provided data.
   #
-  # data   - A binary String.
+  # data - A binary String.
   #
   # Returns an Array including the Array of decoded Strings and the Integer
   # number of bytes read.
@@ -229,6 +229,34 @@ module SSHData::Encoding
     end
 
     [strs, total_read]
+  end
+
+  # Read a series of key/value pairs out of the provided data.
+  #
+  # data - A binary String.
+  #
+  # Returns an Array including the Hash of decoded keys/values and the Integer
+  # number of bytes read.
+  def decode_options(data)
+    total_read = 0
+    opts = {}
+
+    while data.bytesize > total_read
+      key, read = decode_string(data, total_read)
+      total_read += read
+
+      value_data, read = decode_string(data, total_read)
+      total_read += read
+
+      value_str, read = decode_string(value_data)
+      if read != value_data.bytesize
+        raise SSHData::DecodeError, "bad options data"
+      end
+
+      opts[key] = value_str
+    end
+
+    [opts, total_read]
   end
 
   # Read a multi-precision integer from the provided data.
