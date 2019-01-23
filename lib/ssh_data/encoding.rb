@@ -248,12 +248,14 @@ module SSHData::Encoding
       value_data, read = decode_string(data, total_read)
       total_read += read
 
-      value_str, read = decode_string(value_data)
-      if read != value_data.bytesize
-        raise SSHData::DecodeError, "bad options data"
+      if value_data.bytesize > 0
+        opts[key], read = decode_string(value_data)
+        if read != value_data.bytesize
+          raise SSHData::DecodeError, "bad options data"
+        end
+      else
+        opts[key] = true
       end
-
-      opts[key] = value_str
     end
 
     [opts, total_read]

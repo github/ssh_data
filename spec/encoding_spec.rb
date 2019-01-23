@@ -130,7 +130,7 @@ describe SSHData::Encoding do
     expect(rsa_cert_data[:valid_after]).to eq(0)
     expect(rsa_cert_data[:valid_before]).to eq((2**64)-1)
     expect(rsa_cert_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-    expect(rsa_cert_data[:extensions]).to eq("\x00\x00\x00\x03baz\x00\x00\x00\x08\x00\x00\x00\x04qwer")
+    expect(rsa_cert_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
     expect(rsa_cert_data[:reserved]).to eq("")
 
     expect(rsa_cert_data[:signature_key]).to be_a(String)
@@ -159,7 +159,7 @@ describe SSHData::Encoding do
     expect(dsa_cert_data[:valid_after]).to eq(0)
     expect(dsa_cert_data[:valid_before]).to eq((2**64)-1)
     expect(dsa_cert_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-    expect(dsa_cert_data[:extensions]).to eq("\x00\x00\x00\x03baz\x00\x00\x00\x08\x00\x00\x00\x04qwer")
+    expect(dsa_cert_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
     expect(dsa_cert_data[:reserved]).to eq("")
 
     expect(dsa_cert_data[:signature_key]).to be_a(String)
@@ -186,7 +186,7 @@ describe SSHData::Encoding do
     expect(ecdsa_cert_data[:valid_after]).to eq(0)
     expect(ecdsa_cert_data[:valid_before]).to eq((2**64)-1)
     expect(ecdsa_cert_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-    expect(ecdsa_cert_data[:extensions]).to eq("\x00\x00\x00\x03baz\x00\x00\x00\x08\x00\x00\x00\x04qwer")
+    expect(ecdsa_cert_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
     expect(ecdsa_cert_data[:reserved]).to eq("")
 
     expect(ecdsa_cert_data[:signature_key]).to be_a(String)
@@ -212,7 +212,7 @@ describe SSHData::Encoding do
     expect(ed25519_cert_data[:valid_after]).to eq(0)
     expect(ed25519_cert_data[:valid_before]).to eq((2**64)-1)
     expect(ed25519_cert_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-    expect(ed25519_cert_data[:extensions]).to eq("\x00\x00\x00\x03baz\x00\x00\x00\x08\x00\x00\x00\x04qwer")
+    expect(ed25519_cert_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
     expect(ed25519_cert_data[:reserved]).to eq("")
 
     expect(ed25519_cert_data[:signature_key]).to be_a(String)
@@ -239,7 +239,7 @@ describe SSHData::Encoding do
     expect(rsa_ca_data[:valid_after]).to eq(0)
     expect(rsa_ca_data[:valid_before]).to eq((2**64)-1)
     expect(rsa_ca_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-    expect(rsa_ca_data[:extensions]).to eq("\x00\x00\x00\x03baz\x00\x00\x00\x08\x00\x00\x00\x04qwer")
+    expect(rsa_ca_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
     expect(rsa_ca_data[:reserved]).to eq("")
 
     expect(rsa_ca_data[:signature_key]).to be_a(String)
@@ -266,7 +266,7 @@ describe SSHData::Encoding do
     expect(dsa_ca_data[:valid_after]).to eq(0)
     expect(dsa_ca_data[:valid_before]).to eq((2**64)-1)
     expect(dsa_ca_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-    expect(dsa_ca_data[:extensions]).to eq("\x00\x00\x00\x03baz\x00\x00\x00\x08\x00\x00\x00\x04qwer")
+    expect(dsa_ca_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
     expect(dsa_ca_data[:reserved]).to eq("")
 
     expect(dsa_ca_data[:signature_key]).to be_a(String)
@@ -290,7 +290,7 @@ describe SSHData::Encoding do
     expect(ecdsa_ca_data[:valid_after]).to eq(0)
     expect(ecdsa_ca_data[:valid_before]).to eq((2**64)-1)
     expect(ecdsa_ca_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-    expect(ecdsa_ca_data[:extensions]).to eq("\x00\x00\x00\x03baz\x00\x00\x00\x08\x00\x00\x00\x04qwer")
+    expect(ecdsa_ca_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
     expect(ecdsa_ca_data[:reserved]).to eq("")
 
     expect(ecdsa_ca_data[:signature_key]).to be_a(String)
@@ -314,7 +314,7 @@ describe SSHData::Encoding do
     expect(ed25519_ca_data[:valid_after]).to eq(0)
     expect(ed25519_ca_data[:valid_before]).to eq((2**64)-1)
     expect(ed25519_ca_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-    expect(ed25519_ca_data[:extensions]).to eq("\x00\x00\x00\x03baz\x00\x00\x00\x08\x00\x00\x00\x04qwer")
+    expect(ed25519_ca_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
     expect(ed25519_ca_data[:reserved]).to eq("")
 
     expect(ed25519_ca_data[:signature_key]).to be_a(String)
