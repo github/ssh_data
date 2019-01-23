@@ -33,8 +33,10 @@ describe SSHData::PublicKey::RSA do
   end
 
   it "can verify certificate signatures" do
-    SSHData::Certificate.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub"),
-      unsafe_no_verify: false
-    )
+    expect {
+      SSHData::Certificate.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub"),
+        unsafe_no_verify: false
+      )
+    }.not_to raise_error
   end
 end

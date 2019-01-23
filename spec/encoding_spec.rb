@@ -1,3 +1,4 @@
+require "securerandom"
 require_relative "./spec_helper"
 
 describe SSHData::Encoding do
@@ -15,6 +16,19 @@ describe SSHData::Encoding do
   let(:dsa_ca_data)     { described_class.decode_certificate(fixture("rsa_leaf_for_dsa_ca-cert.pub",     binary: true)).first }
   let(:ecdsa_ca_data)   { described_class.decode_certificate(fixture("rsa_leaf_for_ecdsa_ca-cert.pub",   binary: true)).first }
   let(:ed25519_ca_data) { described_class.decode_certificate(fixture("rsa_leaf_for_ed25519_ca-cert.pub", binary: true)).first }
+
+  it "can round trip a string" do
+    s1 = "foobar"
+    s2, read = described_class.decode_string(described_class.encode_string(s1))
+    expect(s2).to eq(s1)
+    expect(read).to eq(s1.length + 4)
+  end
+
+  it "can round trip an mpint" do
+    i1 = OpenSSL::BN.new(SecureRandom.bytes((rand * 100).to_i), 2)
+    i2, read = described_class.decode_mpint(described_class.encode_mpint(i1))
+    expect(i2).to eq(i1)
+  end
 
   it "can decode a public key at an offset" do
     prefix = "foobar"

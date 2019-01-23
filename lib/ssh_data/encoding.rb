@@ -1,6 +1,3 @@
-require "openssl"
-require "base64"
-
 module SSHData::Encoding
   # Fields in an RSA public key
   RSA_KEY_FIELDS = [
@@ -210,7 +207,7 @@ module SSHData::Encoding
   #
   # string - The String to encode.
   #
-  # Returns an encoding representation of the String.
+  # Returns an encoded representation of the String.
   def encode_string(string)
     [string.bytesize, string].pack("L>A*")
   end
@@ -245,6 +242,16 @@ module SSHData::Encoding
 
     [mpi, mpi_size]
   end
+
+  # Encoding a BN as an mpint.
+  #
+  # bn - The OpenSSL::BN to encode.
+  #
+  # Returns an encoded representation of the BN.
+  def encode_mpint(bn)
+    bn.to_s(0)
+  end
+
 
   # Read a uint64 from the provided data.
   #
