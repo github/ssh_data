@@ -68,6 +68,12 @@ class SSHData::PublicKey::ECDSA < SSHData::PublicKey::Base
     @openssl ||= OpenSSL::PKey::EC.new(asn1.to_der)
   end
 
+  # Verify an SSH signature.
+  #
+  # signed_data - The String message that the signature was calculated over.
+  # signature   - The binarty String signature with SSH encoding.
+  #
+  # Returns boolean.
   def verify(signed_data, signature)
     sig_algo, ssh_sig, _ = SSHData::Encoding.decode_signature(signature)
     if sig_algo != "ecdsa-sha2-#{curve}"

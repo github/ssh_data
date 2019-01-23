@@ -1,5 +1,4 @@
 require_relative "../spec_helper"
-require "ed25519"
 
 describe SSHData::PublicKey::ED25519 do
   let(:signing_key) { Ed25519::SigningKey.generate }

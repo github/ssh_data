@@ -1,4 +1,5 @@
 require "ssh_data"
+require "ed25519"
 
 REPO_PATH    = File.expand_path(File.join(__FILE__, "..", ".."))
 FIXTURE_PATH = File.expand_path(File.join(REPO_PATH, "spec", "fixtures"))

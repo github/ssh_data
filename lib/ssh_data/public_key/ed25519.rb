@@ -11,6 +11,12 @@ class SSHData::PublicKey::ED25519 < SSHData::PublicKey::Base
     @pk = pk
   end
 
+  # Verify an SSH signature.
+  #
+  # signed_data - The String message that the signature was calculated over.
+  # signature   - The binarty String signature with SSH encoding.
+  #
+  # Returns boolean.
   def verify(signed_data, signature)
     unless self.class.enabled?
       raise SSHData::VerifyError, "the ed25519 gem isn't loadedd"
