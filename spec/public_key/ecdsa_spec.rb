@@ -36,6 +36,7 @@ describe SSHData::PublicKey::ECDSA do
 
       it "can verify signatures" do
         expect(subject.verify(msg, sig)).to be(true)
+        expect(subject.verify("wrong", sig)).to be(false)
       end
     end
   end

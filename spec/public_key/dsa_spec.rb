@@ -37,6 +37,7 @@ describe SSHData::PublicKey::DSA do
 
   it "can verify signatures" do
     expect(subject.verify(msg, sig)).to be(true)
+    expect(subject.verify("wrong", sig)).to be(false)
   end
 
   it "can parse openssh-generate keys" do
