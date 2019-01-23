@@ -5,8 +5,12 @@ describe SSHData::PublicKey::RSA do
   let(:public_key)  { private_key.public_key }
   let(:params)      { public_key.params }
 
-  let(:cert)   { SSHData::Certificate.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub"), unsafe_no_verify: true) }
-  let(:ca_key) { cert.ca_key }
+  let(:msg)     { "hello, world!" }
+  let(:digest)  { OpenSSL::Digest::SHA1.new }
+  let(:raw_sig) { private_key.sign(digest, msg) }
+  let(:sig)     { SSHData::Encoding.encode_signature(SSHData::PublicKey::ALGO_RSA, raw_sig) }
+
+  let(:openssh_key) { SSHData::PublicKey.parse(fixture("rsa_leaf_for_rsa_ca.pub")) }
 
   subject { described_class.new(e: params["e"], n: params["n"]) }
 
@@ -20,8 +24,17 @@ describe SSHData::PublicKey::RSA do
     expect(subject.openssl.to_der).to eq(public_key.to_der)
   end
 
+  it "can verify signatures" do
+    expect(subject.verify(msg, sig)).to be(true)
+  end
+
   it "can parse openssh-generate keys" do
-    expect(ca_key).to be_a(described_class)
-    expect { ca_key.openssl }.not_to raise_error
+    expect { openssh_key.openssl }.not_to raise_error
+  end
+
+  it "can verify certificate signatures" do
+    SSHData::Certificate.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub"),
+      unsafe_no_verify: false
+    )
   end
 end

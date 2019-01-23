@@ -28,7 +28,7 @@ describe SSHData::Encoding do
 
   it "can skip the algo when decoding a public key" do
     raw = fixture("rsa_leaf_for_rsa_ca.pub", binary: true)
-    algo, offset = described_class.read_string(raw)
+    algo, offset = described_class.decode_string(raw)
     data, _ = described_class.decode_public_key(raw, algo, offset)
 
     expect(data).to eq(rsa_key_data)

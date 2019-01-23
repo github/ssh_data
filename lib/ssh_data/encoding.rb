@@ -45,6 +45,36 @@ module SSHData::Encoding
     SSHData::PublicKey::ALGO_ED25519  => ED25519_KEY_FIELDS,
   }
 
+  # Decode the signature.
+  #
+  # raw    - The binary String signature as described by RFC4253 section 6.6.
+  # offset - Integer number of bytes into `raw` at which we should start
+  #          reading.
+  #
+  # Returns an Array containing the decoded algorithm String, the decoded binary
+  # signature String, and the Integer number of bytes read.
+  def self.decode_signature(raw, offset=0)
+    total_read = 0
+
+    algo, read = decode_string(raw, offset + total_read)
+    total_read += read
+
+    sig, read = decode_string(raw, offset + total_read)
+    total_read += read
+
+    [algo, sig, total_read]
+  end
+
+  # Encoding a signature.
+  #
+  # algo       - The String signature algorithm.
+  # signature  - The String signature blob.
+  #
+  # Returns an encoded String.
+  def encode_signature(algo, signature)
+    encode_string(algo) + encode_string(signature)
+  end
+
   # Decode the fields in a public key.
   #
   # raw    - Binary String public key as described by RFC4253 section 6.6.
@@ -58,7 +88,7 @@ module SSHData::Encoding
     total_read = 0
 
     if algo.nil?
-      algo, read = read_string(raw, offset + total_read)
+      algo, read = decode_string(raw, offset + total_read)
       total_read += read
     end
 
@@ -66,7 +96,7 @@ module SSHData::Encoding
       raise SSHData::DecodeError, "unknown key algo: #{algo.inspect}"
     end
 
-    data, read = decode_all(raw, fields, offset + total_read)
+    data, read = decode_fields(raw, fields, offset + total_read)
     total_read += read
 
     data[:algo] = algo
@@ -85,7 +115,7 @@ module SSHData::Encoding
   def self.decode_certificate(raw, offset=0)
     total_read = 0
 
-    data, read = decode_all(raw, [
+    data, read = decode_fields(raw, [
       [:algo,  :string],
       [:nonce, :string],
     ], offset + total_read)
@@ -98,7 +128,7 @@ module SSHData::Encoding
     data[:key_data], read = decode_public_key(raw, key_algo, offset + total_read)
     total_read += read
 
-    trailer, read = decode_all(raw, [
+    trailer, read = decode_fields(raw, [
       [:serial,           :uint64],
       [:type,             :uint32],
       [:key_id,           :string],
@@ -126,20 +156,20 @@ module SSHData::Encoding
   #
   # Returns an Array containing a Hash mapping the provided field keys to the
   # decoded values and the Integer number of bytes read.
-  def decode_all(data, fields, offset=0)
+  def decode_fields(data, fields, offset=0)
     hash = {}
     total_read = 0
 
     fields.each do |key, type|
       value, read = case type
       when :string
-        read_string(data, offset + total_read)
+        decode_string(data, offset + total_read)
       when :mpint
-        read_mpint(data, offset + total_read)
+        decode_mpint(data, offset + total_read)
       when :uint64
-        read_uint64(data, offset + total_read)
+        decode_uint64(data, offset + total_read)
       when :uint32
-        read_uint32(data, offset + total_read)
+        decode_uint32(data, offset + total_read)
       else
         raise SSHData::DecodeError
       end
@@ -158,7 +188,7 @@ module SSHData::Encoding
   #
   # Returns an Array including the decoded String and the Integer number of
   # bytes read.
-  def read_string(data, offset=0)
+  def decode_string(data, offset=0)
     if data.bytesize < offset + 4
       raise SSHData::DecodeError, "data too short"
     end
@@ -176,6 +206,15 @@ module SSHData::Encoding
     [string, 4 + size]
   end
 
+  # Encoding a string.
+  #
+  # string - The String to encode.
+  #
+  # Returns an encoding representation of the String.
+  def encode_string(string)
+    [string.bytesize, string].pack("L>A*")
+  end
+
   # Read a multi-precision integer from the provided data.
   #
   # data   - A binary String.
@@ -183,7 +222,7 @@ module SSHData::Encoding
   #
   # Returns an Array including the decoded mpint as an OpenSSL::BN and the
   # Integer number of bytes read.
-  def read_mpint(data, offset=0)
+  def decode_mpint(data, offset=0)
     if data.bytesize < offset + 4
       raise SSHData::DecodeError, "data too short"
     end
@@ -214,7 +253,7 @@ module SSHData::Encoding
   #
   # Returns an Array including the decoded uint64 as an Integer and the
   # Integer number of bytes read.
-  def read_uint64(data, offset=0)
+  def decode_uint64(data, offset=0)
     if data.bytesize < offset + 8
       raise SSHData::DecodeError, "data too short"
     end
@@ -231,7 +270,7 @@ module SSHData::Encoding
   #
   # Returns an Array including the decoded uint32 as an Integer and the
   # Integer number of bytes read.
-  def read_uint32(data, offset=0)
+  def decode_uint32(data, offset=0)
     if data.bytesize < offset + 4
       raise SSHData::DecodeError, "data too short"
     end

@@ -56,9 +56,12 @@ class SSHData::Certificate
     unless unsafe_no_verify
       # The signature is the last field. The signature is calculated over all
       # preceding data.
-      signed_data_len = raw.bytesize - data[:signature].bytesize
+      signed_data_len = raw.bytesize - data[:signature].bytesize - 4
       signed_data = raw.byteslice(0, signed_data_len)
-      data[:ca_key].verify(signed_data, data[:signature])
+
+      unless data[:ca_key].verify(signed_data, data[:signature])
+        raise SSHData::VerifyError
+      end
     end
 
     new(**data)

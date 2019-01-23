@@ -13,6 +13,15 @@ class SSHData::PublicKey::RSA < SSHData::PublicKey::Base
     @openssl ||= OpenSSL::PKey::RSA.new(asn1.to_der)
   end
 
+  def verify(signed_data, signature)
+    sig_algo, raw_sig, _ = SSHData::Encoding.decode_signature(signature)
+    if sig_algo != SSHData::PublicKey::ALGO_RSA
+      raise SSHData::DecodeError, "bad signature algorithm: #{sig_algo.inspect}"
+    end
+
+    openssl.verify(OpenSSL::Digest::SHA1.new, raw_sig, signed_data)
+  end
+
   private
 
   def asn1
