@@ -38,7 +38,13 @@ class SSHData::PublicKey::DSA < SSHData::PublicKey::Base
       raise SSHData::DecodeError, "bad asn1 signature"
     end
 
-    [r.value.to_s(2), s.value.to_s(2)].pack("a20a20")
+    # left pad big endian representations to 20 bytes and concatenate
+    [
+      "\x00" * (20 - r.value.num_bytes),
+      r.value.to_s(2),
+      "\x00" * (20 - s.value.num_bytes),
+      s.value.to_s(2)
+    ].join
   end
 
   def initialize(p:, q:, g:, y:)

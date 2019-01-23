@@ -35,6 +35,16 @@ describe SSHData::PublicKey::DSA do
     expect(round_tripped).to eq(openssl_sig)
   end
 
+  it "can encode/decode left padded signatures" do
+    sig = "\x00" + "A" * 39
+
+    round_tripped = described_class.ssh_signature(
+      described_class.openssl_signature(sig)
+    )
+
+    expect(round_tripped).to eq(sig)
+  end
+
   it "can verify signatures" do
     expect(subject.verify(msg, sig)).to be(true)
     expect(subject.verify("wrong", sig)).to be(false)
