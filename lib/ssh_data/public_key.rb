@@ -34,10 +34,7 @@ module SSHData::PublicKey
   end
 
   def self.from_data(data)
-    data = data.dup
-    algo = data.delete(:algo)
-
-    case algo
+    case data[:algo]
     when ALGO_RSA
       RSA.new(**data)
     when ALGO_DSA

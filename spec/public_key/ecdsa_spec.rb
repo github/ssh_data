@@ -5,6 +5,8 @@ describe SSHData::PublicKey::ECDSA do
 
   described_class::OPENSSL_CURVE_NAME_FOR_CURVE.each do |ssh_curve, openssl_curve|
     describe openssl_curve do
+      let(:algo) { "ecdsa-sha2-#{ssh_curve}" }
+
       let(:private_key) { OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key) }
       let(:public_key)  { OpenSSL::PKey::EC.new(private_key.to_der).tap { |k| k.private_key = nil } }
 
@@ -12,9 +14,19 @@ describe SSHData::PublicKey::ECDSA do
       let(:digest)      { described_class::DIGEST_FOR_CURVE[ssh_curve].new }
       let(:openssl_sig) { private_key.sign(digest, msg) }
       let(:ssh_sig)     { described_class.ssh_signature(openssl_sig) }
-      let(:sig)         { SSHData::Encoding.encode_signature("ecdsa-sha2-#{ssh_curve}", ssh_sig) }
+      let(:sig)         { SSHData::Encoding.encode_signature(algo, ssh_sig) }
 
-      subject { described_class.new(curve: ssh_curve, public_key: public_key.public_key.to_bn.to_s(2)) }
+      subject do
+        described_class.new(
+          algo: algo,
+          curve: ssh_curve,
+          public_key: public_key.public_key.to_bn.to_s(2)
+        )
+      end
+
+      it "has an algo" do
+        expect(subject.algo).to eq(algo)
+      end
 
       it "has parameters" do
         expect(subject.curve).to eq(ssh_curve)

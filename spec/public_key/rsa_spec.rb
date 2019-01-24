@@ -12,7 +12,17 @@ describe SSHData::PublicKey::RSA do
 
   let(:openssh_key) { SSHData::PublicKey.parse(fixture("rsa_leaf_for_rsa_ca.pub")) }
 
-  subject { described_class.new(e: params["e"], n: params["n"]) }
+  subject do
+    described_class.new(
+      algo: SSHData::PublicKey::ALGO_RSA,
+      e: params["e"],
+      n: params["n"]
+    )
+  end
+
+  it "has an algo" do
+    expect(subject.algo).to eq(SSHData::PublicKey::ALGO_RSA)
+  end
 
   it "has parameters" do
     expect(subject.e).to eq(params["e"])

@@ -13,7 +13,19 @@ describe SSHData::PublicKey::DSA do
 
   let(:openssh_key) { SSHData::PublicKey.parse(fixture("dsa_leaf_for_rsa_ca.pub")) }
 
-  subject { described_class.new(p: params["p"], q: params["q"], g: params["g"], y: params["pub_key"]) }
+  subject do
+    described_class.new(
+      algo: SSHData::PublicKey::ALGO_DSA,
+      p: params["p"],
+      q: params["q"],
+      g: params["g"],
+      y: params["pub_key"]
+    )
+  end
+
+  it "has an algo" do
+    expect(subject.algo).to eq(SSHData::PublicKey::ALGO_DSA)
+  end
 
   it "has parameters" do
     expect(subject.p).to eq(params["p"])

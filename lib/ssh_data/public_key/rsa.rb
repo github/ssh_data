@@ -1,7 +1,12 @@
 class SSHData::PublicKey::RSA < SSHData::PublicKey::Base
   attr_reader :e, :n
 
-  def initialize(e:, n:)
+  def initialize(algo:, e:, n:)
+    unless algo == SSHData::PublicKey::ALGO_RSA
+      raise SSHData::DecodeError, "bad algorithm: #{algo.inpsect}"
+    end
+
+    @algo = algo
     @e = e
     @n = n
   end

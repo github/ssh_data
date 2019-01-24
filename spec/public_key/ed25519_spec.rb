@@ -10,7 +10,16 @@ describe SSHData::PublicKey::ED25519 do
 
   let(:openssh_key) { SSHData::PublicKey.parse(fixture("ed25519_leaf_for_rsa_ca.pub")) }
 
-  subject { described_class.new(pk: verify_key.to_bytes) }
+  subject do
+    described_class.new(
+      algo: SSHData::PublicKey::ALGO_ED25519,
+      pk: verify_key.to_bytes
+    )
+  end
+
+  it "has an algo" do
+    expect(subject.algo).to eq(SSHData::PublicKey::ALGO_ED25519)
+  end
 
   it "has parameters" do
     expect(subject.pk).to eq(verify_key.to_bytes)

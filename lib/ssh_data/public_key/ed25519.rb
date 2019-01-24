@@ -7,7 +7,12 @@ class SSHData::PublicKey::ED25519 < SSHData::PublicKey::Base
     Object.const_defined?(:Ed25519)
   end
 
-  def initialize(pk:)
+  def initialize(algo:, pk:)
+    unless algo == SSHData::PublicKey::ALGO_ED25519
+      raise SSHData::DecodeError, "bad algorithm: #{algo.inpsect}"
+    end
+
+    @algo = algo
     @pk = pk
   end
 

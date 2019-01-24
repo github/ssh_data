@@ -47,7 +47,12 @@ class SSHData::PublicKey::DSA < SSHData::PublicKey::Base
     ].join
   end
 
-  def initialize(p:, q:, g:, y:)
+  def initialize(algo:, p:, q:, g:, y:)
+    unless algo == SSHData::PublicKey::ALGO_DSA
+      raise SSHData::DecodeError, "bad algorithm: #{algo.inpsect}"
+    end
+
+    @algo = algo
     @p = p
     @q = q
     @g = g

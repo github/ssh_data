@@ -56,7 +56,12 @@ class SSHData::PublicKey::ECDSA < SSHData::PublicKey::Base
     ].join
   end
 
-  def initialize(curve:, public_key:)
+  def initialize(algo:, curve:, public_key:)
+    unless [SSHData::PublicKey::ALGO_ECDSA256, SSHData::PublicKey::ALGO_ECDSA384, SSHData::PublicKey::ALGO_ECDSA521].include?(algo)
+      raise SSHData::DecodeError, "bad algorithm: #{algo.inpsect}"
+    end
+
+    @algo = algo
     @curve = curve
     @public_key = public_key
   end
