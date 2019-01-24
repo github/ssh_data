@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.homepage = "https://github.com/mastahyeti/ssh_data"
   s.authors = ["mastahyeti"]
   s.required_ruby_version = "~> 2.3"
-  s.files = Dir["./lib/**/*.rb"]
+  s.files = Dir["./lib/**/*.rb"] + ["./LICENSE.md"]
 
   s.add_development_dependency "ed25519", "~> 1.2"
   s.add_development_dependency "pry", "~> 0.10"
