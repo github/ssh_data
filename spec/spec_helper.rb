@@ -10,3 +10,8 @@ def fixture(name, binary: false)
   _, b64, _ = data.split(" ", 3)
     Base64.decode64(b64)
 end
+
+def ssh_keygen_fingerprint(name, algo)
+  out = `ssh-keygen -E #{algo} -l -f #{File.join(FIXTURE_PATH, name)}`
+  out.split(":", 2).last.split(" ").first
+end
