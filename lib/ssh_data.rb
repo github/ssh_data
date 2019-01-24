@@ -15,7 +15,11 @@ module SSHData
       raise DecodeError, "bad data format"
     end
 
-    raw = Base64.strict_decode64(b64)
+    raw = begin
+      Base64.strict_decode64(b64)
+    rescue ArgumentError
+      raise DecodeError, "bad data format"
+    end
 
     [algo, raw, host]
   end
