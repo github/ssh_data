@@ -25,20 +25,28 @@ module SSHData
     #
     # Returns a Certificate instance.
     def self.parse(cert, unsafe_no_verify: false)
-      algo, b64, _ = cert.split(" ", 3)
-      if algo.nil? || b64.nil?
-        raise DecodeError, "bad certificate format"
+      algo, raw, _ = SSHData.key_parts(cert)
+      parsed = parse_raw(raw, unsafe_no_verify: unsafe_no_verify)
+
+      if parsed.algo != algo
+        raise DecodeError, "algo mismatch: #{parsed.algo.inspect}!=#{algo.inspect}"
       end
 
-      raw = Base64.decode64(b64)
+      parsed
+    end
+
+    # Parse an SSH certificate.
+    #
+    # cert              - A raw binary certificate String.
+    # unsafe_no_verify: - Bool of whether to skip verifying certificate
+    #                     signature (Default false)
+    #
+    # Returns a Certificate instance.
+    def self.parse_raw(raw, unsafe_no_verify: false)
       data, read = Encoding.decode_certificate(raw)
 
       if read != raw.bytesize
         raise DecodeError, "unexpected trailing data"
-      end
-
-      if data[:algo] != algo
-        raise DecodeError, "algo mismatch: #{data[:algo].inspect}!=#{algo.inspect}"
       end
 
       # Parse data into better types, where possible.

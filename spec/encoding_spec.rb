@@ -17,6 +17,28 @@ describe SSHData::Encoding do
   let(:ecdsa_ca_data)   { described_class.decode_certificate(fixture("rsa_leaf_for_ecdsa_ca-cert.pub",   binary: true)).first }
   let(:ed25519_ca_data) { described_class.decode_certificate(fixture("rsa_leaf_for_ed25519_ca-cert.pub", binary: true)).first }
 
+  it "raises on unknown public key algorithms" do
+    raw = fixture("rsa_leaf_for_rsa_ca.pub", binary: true)
+
+    # first four bytes are lenth for algo field. flip bits in first byte of algo
+    raw[5] = (raw[5].ord ^ 0xff).chr
+
+    expect {
+      described_class.decode_public_key(raw)
+    }.to raise_error(SSHData::AlgorithmError)
+  end
+
+  it "raises on unknown certificate algorithms" do
+    raw = fixture("rsa_leaf_for_rsa_ca-cert.pub", binary: true)
+
+    # first four bytes are lenth for algo field. flip bits in first byte of algo
+    raw[5] = (raw[5].ord ^ 0xff).chr
+
+    expect {
+      described_class.decode_certificate(raw)
+    }.to raise_error(SSHData::AlgorithmError)
+  end
+
   it "can decode options" do
     opts = {"k1" => "v1", "k2" => "v2"}
     encoded = opts.reduce("") do |cum, (k, v)|

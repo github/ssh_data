@@ -91,7 +91,7 @@ module SSHData
       end
 
       unless fields = KEY_FIELDS_BY_PUBLIC_KEY_ALGO[algo]
-        raise DecodeError, "unknown key algo: #{algo.inspect}"
+        raise AlgorithmError
       end
 
       data, read = decode_fields(raw, fields, offset + total_read)
@@ -120,7 +120,7 @@ module SSHData
       total_read += read
 
       unless key_algo = PUBLIC_KEY_ALGO_BY_CERT_ALGO[data[:algo]]
-        raise DecodeError, "unknown cert algo: #{data[:algo].inspect}"
+        raise AlgorithmError
       end
 
       data[:key_data], read = decode_public_key(raw, key_algo, offset + total_read)

@@ -15,20 +15,26 @@ module SSHData
     #
     # Returns a PublicKey::Base subclass instance.
     def self.parse(key)
-      algo, b64, _ = key.split(" ", 3)
-      if algo.nil? || b64.nil?
-        raise DecodeError, "bad public key format"
+      algo, raw, _ = SSHData.key_parts(key)
+      parsed = parse_raw(raw)
+
+      if parsed.algo != algo
+        raise DecodeError, "algo mismatch: #{parsed.algo.inspect}!=#{algo.inspect}"
       end
 
-      raw = Base64.decode64(b64)
+      parsed
+    end
+
+    # Parse an SSH public key.
+    #
+    # key - A raw binary public key String.
+    #
+    # Returns a PublicKey::Base subclass instance.
+    def self.parse_raw(raw)
       data, read = Encoding.decode_public_key(raw)
 
       if read != raw.bytesize
         raise DecodeError, "unexpected trailing data"
-      end
-
-      if data[:algo] != algo
-        raise DecodeError, "algo mismatch: #{data[:algo].inspect}!=#{algo.inspect}"
       end
 
       from_data(data)
