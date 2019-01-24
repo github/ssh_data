@@ -1,11 +1,15 @@
-class SSHData::PublicKey::Base
-  attr_reader :algo
+module SSHData
+  module PublicKey
+    class Base
+      attr_reader :algo
 
-  def initialize(**kwargs)
-    raise "implement me"
-  end
+      def initialize(**kwargs)
+        raise "implement me"
+      end
 
-  def verify(signed_data, signature)
-    raise "implement me"
+      def verify(signed_data, signature)
+        raise "implement me"
+      end
+    end
   end
 end
