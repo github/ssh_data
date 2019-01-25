@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.summary = "Library for parsing SSH certificates"
   s.version = SSHData::VERSION
   s.license = "MIT"
-  s.homepage = "https://github.com/mastahyeti/ssh_data"
+  s.homepage = "https://github.com/github/ssh_data"
   s.authors = ["mastahyeti"]
   s.required_ruby_version = "~> 2.3"
   s.files = Dir["./lib/**/*.rb"] + ["./LICENSE.md"]
