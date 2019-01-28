@@ -63,7 +63,7 @@ describe SSHData::PublicKey::DSA do
   end
 
   it "can parse openssh-generate keys" do
-    expect { openssh_key.openssl }.not_to raise_error
+    expect { openssh_key }.not_to raise_error
   end
 
   it "can verify certificate signatures" do

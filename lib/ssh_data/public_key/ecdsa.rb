@@ -1,7 +1,7 @@
 module SSHData
   module PublicKey
     class ECDSA < Base
-      attr_reader :curve, :public_key
+      attr_reader :curve, :public_key, :openssl
 
       OPENSSL_CURVE_NAME_FOR_CURVE = {
         "nistp256" => "prime256v1",
@@ -63,13 +63,8 @@ module SSHData
         @algo = algo
         @curve = curve
         @public_key = public_key
-      end
 
-      # The public key represented as an OpenSSL object.
-      #
-      # Returns an OpenSSL::PKey::PKey instance.
-      def openssl
-        @openssl ||= OpenSSL::PKey::EC.new(asn1.to_der)
+        @openssl = OpenSSL::PKey::EC.new(asn1.to_der)
       end
 
       # Verify an SSH signature.

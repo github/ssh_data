@@ -1,7 +1,7 @@
 module SSHData
   module PublicKey
     class ED25519 < Base
-      attr_reader :pk
+      attr_reader :pk, :ed25519_key
 
       # ed25519 isn't a hard requirement for using this Gem. We only do actual
       # validation with the key if the ed25519 Gem has been loaded.
@@ -16,6 +16,10 @@ module SSHData
 
         @algo = algo
         @pk = pk
+
+        if self.class.enabled?
+          @ed25519_key = Ed25519::VerifyKey.new(pk)
+        end
       end
 
       # Verify an SSH signature.
@@ -39,11 +43,6 @@ module SSHData
         rescue Ed25519::VerifyError
           false
         end
-      end
-
-      def ed25519_key
-        return nil unless self.class.enabled?
-        @ed25519_key ||= Ed25519::VerifyKey.new(pk)
       end
     end
   end
