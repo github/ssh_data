@@ -77,4 +77,17 @@ describe SSHData::PublicKey::ECDSA do
     }.not_to raise_error
 
   end
+
+  it "blows up if the curve doesn't match the key type" do
+    # outer layer claims to be p384, but curve and public key are p256
+    malformed = [SSHData::PublicKey::ALGO_ECDSA384, Base64.strict_encode64([
+      SSHData::Encoding.encode_string(SSHData::PublicKey::ALGO_ECDSA384),
+      SSHData::Encoding.encode_string(openssh_key.curve),
+      SSHData::Encoding.encode_string(openssh_key.public_key),
+    ].join)].join(" ")
+
+    expect {
+      SSHData::PublicKey.parse(malformed)
+    }.to raise_error(SSHData::DecodeError)
+  end
 end

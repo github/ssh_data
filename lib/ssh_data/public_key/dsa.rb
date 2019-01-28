@@ -51,7 +51,7 @@ module SSHData
 
       def initialize(algo:, p:, q:, g:, y:)
         unless algo == ALGO_DSA
-          raise DecodeError, "bad algorithm: #{algo.inpsect}"
+          raise DecodeError, "bad algorithm: #{algo.inspect}"
         end
 
         @algo = algo
