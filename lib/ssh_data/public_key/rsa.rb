@@ -1,23 +1,18 @@
 module SSHData
   module PublicKey
     class RSA < Base
-      attr_reader :e, :n
+      attr_reader :e, :n, :openssl
 
       def initialize(algo:, e:, n:)
         unless algo == ALGO_RSA
-          raise DecodeError, "bad algorithm: #{algo.inpsect}"
+          raise DecodeError, "bad algorithm: #{algo.inspect}"
         end
 
         @algo = algo
         @e = e
         @n = n
-      end
 
-      # The public key represented as an OpenSSL object.
-      #
-      # Returns an OpenSSL::PKey::PKey instance.
-      def openssl
-        @openssl ||= OpenSSL::PKey::RSA.new(asn1.to_der)
+        @openssl = OpenSSL::PKey::RSA.new(asn1.to_der)
       end
 
       # Verify an SSH signature.

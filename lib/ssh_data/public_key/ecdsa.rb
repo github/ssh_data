@@ -1,7 +1,7 @@
 module SSHData
   module PublicKey
     class ECDSA < Base
-      attr_reader :curve, :public_key
+      attr_reader :curve, :public_key, :openssl
 
       OPENSSL_CURVE_NAME_FOR_CURVE = {
         "nistp256" => "prime256v1",
@@ -57,19 +57,22 @@ module SSHData
 
       def initialize(algo:, curve:, public_key:)
         unless [ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521].include?(algo)
-          raise DecodeError, "bad algorithm: #{algo.inpsect}"
+          raise DecodeError, "bad algorithm: #{algo.inspect}"
+        end
+
+        unless algo == "ecdsa-sha2-#{curve}"
+          raise DecodeError, "bad curve: #{curve.inspect}"
         end
 
         @algo = algo
         @curve = curve
         @public_key = public_key
-      end
 
-      # The public key represented as an OpenSSL object.
-      #
-      # Returns an OpenSSL::PKey::PKey instance.
-      def openssl
-        @openssl ||= OpenSSL::PKey::EC.new(asn1.to_der)
+        @openssl = begin
+          OpenSSL::PKey::EC.new(asn1.to_der)
+        rescue ArgumentError
+          raise DecodeError, "bad key data"
+        end
       end
 
       # Verify an SSH signature.

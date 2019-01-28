@@ -50,11 +50,23 @@ describe SSHData::PublicKey::ECDSA do
         expect(subject.verify(msg, sig)).to be(true)
         expect(subject.verify("wrong", sig)).to be(false)
       end
+
+      it "blows up parsing malformed keys" do
+        malformed = [algo, Base64.strict_encode64([
+          SSHData::Encoding.encode_string(algo),
+          SSHData::Encoding.encode_string(ssh_curve),
+          SSHData::Encoding.encode_string(subject.public_key[0...-1]),
+        ].join)].join(" ")
+
+        expect {
+          SSHData::PublicKey.parse(malformed)
+        }.to raise_error(SSHData::DecodeError)
+      end
     end
   end
 
   it "can parse openssh-generate keys" do
-    expect { openssh_key.openssl }.not_to raise_error
+    expect { openssh_key }.not_to raise_error
   end
 
   it "can verify certificate signatures" do
@@ -64,5 +76,18 @@ describe SSHData::PublicKey::ECDSA do
       )
     }.not_to raise_error
 
+  end
+
+  it "blows up if the curve doesn't match the key type" do
+    # outer layer claims to be p384, but curve and public key are p256
+    malformed = [SSHData::PublicKey::ALGO_ECDSA384, Base64.strict_encode64([
+      SSHData::Encoding.encode_string(SSHData::PublicKey::ALGO_ECDSA384),
+      SSHData::Encoding.encode_string(openssh_key.curve),
+      SSHData::Encoding.encode_string(openssh_key.public_key),
+    ].join)].join(" ")
+
+    expect {
+      SSHData::PublicKey.parse(malformed)
+    }.to raise_error(SSHData::DecodeError)
   end
 end

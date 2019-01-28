@@ -1,7 +1,7 @@
 module SSHData
   module PublicKey
     class DSA < Base
-      attr_reader :p, :q, :g, :y
+      attr_reader :p, :q, :g, :y, :openssl
 
       # Convert an SSH encoded DSA signature to DER encoding for verification with
       # OpenSSL.
@@ -51,7 +51,7 @@ module SSHData
 
       def initialize(algo:, p:, q:, g:, y:)
         unless algo == ALGO_DSA
-          raise DecodeError, "bad algorithm: #{algo.inpsect}"
+          raise DecodeError, "bad algorithm: #{algo.inspect}"
         end
 
         @algo = algo
@@ -59,13 +59,8 @@ module SSHData
         @q = q
         @g = g
         @y = y
-      end
 
-      # The public key represented as an OpenSSL object.
-      #
-      # Returns an OpenSSL::PKey::PKey instance.
-      def openssl
-        @openssl ||= OpenSSL::PKey::DSA.new(asn1.to_der)
+        @openssl = OpenSSL::PKey::DSA.new(asn1.to_der)
       end
 
       # Verify an SSH signature.
