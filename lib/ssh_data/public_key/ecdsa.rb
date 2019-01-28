@@ -64,7 +64,11 @@ module SSHData
         @curve = curve
         @public_key = public_key
 
-        @openssl = OpenSSL::PKey::EC.new(asn1.to_der)
+        @openssl = begin
+          OpenSSL::PKey::EC.new(asn1.to_der)
+        rescue ArgumentError
+          raise DecodeError, "bad key data"
+        end
       end
 
       # Verify an SSH signature.

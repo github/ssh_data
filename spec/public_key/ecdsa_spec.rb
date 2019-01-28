@@ -50,6 +50,18 @@ describe SSHData::PublicKey::ECDSA do
         expect(subject.verify(msg, sig)).to be(true)
         expect(subject.verify("wrong", sig)).to be(false)
       end
+
+      it "blows up parsing malformed keys" do
+        malformed = [algo, Base64.strict_encode64([
+          SSHData::Encoding.encode_string(algo),
+          SSHData::Encoding.encode_string(ssh_curve),
+          SSHData::Encoding.encode_string(subject.public_key[0...-1]),
+        ].join)].join(" ")
+
+        expect {
+          SSHData::PublicKey.parse(malformed)
+        }.to raise_error(SSHData::DecodeError)
+      end
     end
   end
 
