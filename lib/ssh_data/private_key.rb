@@ -2,12 +2,11 @@ module SSHData
   module PrivateKey
     PEM_TYPE = "OPENSSH PRIVATE KEY"
 
-    # Parse an SSH public key.
+    # Parse an SSH private key.
     #
-    # key - An SSH formatted public key, including algo, encoded key and optional
-    #       user/host names.
+    # key - An PEM encoded OpenSSH private key.
     #
-    # Returns a PublicKey::Base subclass instance.
+    # Returns an Array of PrivateKey::Base subclass instances.
     def self.parse(key)
       raw = Encoding.decode_pem(key, PEM_TYPE)
 
@@ -20,11 +19,15 @@ module SSHData
     end
 
     def self.from_data(data)
-      case data[:algo]
-      when PublicKey::ALGO_RSA
-        RSA.new(**data)
-      else
-        raise DecodeError, "unkown algo: #{data[:algo].inspect}"
+      data[:private_keys].map do |priv|
+        case priv[:algo]
+        when PublicKey::ALGO_RSA
+          RSA.new(**priv)
+        when PublicKey::ALGO_DSA
+          DSA.new(**priv)
+        else
+          raise DecodeError, "unkown algo: #{priv[:algo].inspect}"
+        end
       end
     end
   end
@@ -32,3 +35,4 @@ end
 
 require "ssh_data/private_key/base"
 require "ssh_data/private_key/rsa"
+require "ssh_data/private_key/dsa"

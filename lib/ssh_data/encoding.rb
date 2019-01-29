@@ -20,6 +20,15 @@ module SSHData
       [:q,       :mpint],
     ]
 
+    # Fields in a DSA private key
+    DSA_PRIVATE_KEY_FIELDS = [
+      [:p, :mpint],
+      [:q, :mpint],
+      [:g, :mpint],
+      [:y, :mpint],
+      [:x, :mpint]
+    ]
+
     # Fields in an RSA public key
     RSA_KEY_FIELDS = [
       [:e, :mpint],
@@ -65,6 +74,7 @@ module SSHData
 
     KEY_FIELDS_BY_PRIVATE_KEY_ALGO = {
       PublicKey::ALGO_RSA => RSA_PRIVATE_KEY_FIELDS,
+      PublicKey::ALGO_DSA => DSA_PRIVATE_KEY_FIELDS,
     }
 
     # Get the raw data from a PEM encoded blob.
