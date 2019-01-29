@@ -1,7 +1,7 @@
 module SSHData
   module PublicKey
     class ECDSA < Base
-      attr_reader :curve, :public_key, :openssl
+      attr_reader :curve, :public_key_bytes, :openssl
 
       OPENSSL_CURVE_NAME_FOR_CURVE = {
         "nistp256" => "prime256v1",
@@ -64,15 +64,16 @@ module SSHData
           raise DecodeError, "bad curve: #{curve.inspect}"
         end
 
-        @algo = algo
         @curve = curve
-        @public_key = public_key
+        @public_key_bytes = public_key
 
         @openssl = begin
           OpenSSL::PKey::EC.new(asn1.to_der)
         rescue ArgumentError
           raise DecodeError, "bad key data"
         end
+
+        super(algo: algo)
       end
 
       # Verify an SSH signature.
@@ -105,7 +106,7 @@ module SSHData
             OpenSSL::ASN1::ObjectId.new("id-ecPublicKey"),
             OpenSSL::ASN1::ObjectId.new(name),
           ]),
-          OpenSSL::ASN1::BitString.new(public_key),
+          OpenSSL::ASN1::BitString.new(public_key_bytes),
         ])
       end
     end
