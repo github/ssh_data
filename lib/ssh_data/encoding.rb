@@ -111,7 +111,11 @@ module SSHData
         raise DecodeError, "bad PEM footer"
       end
 
-      Base64.strict_decode64(lines.join)
+      begin
+        Base64.strict_decode64(lines.join)
+      rescue ArgumentError
+        raise DecodeError, "bad PEM data"
+      end
     end
 
     # Decode an OpenSSH private key.
@@ -145,13 +149,13 @@ module SSHData
 
       privs_read = 0
 
-      checkint1, read = decode_uint32(privs, privs_read)
+      data[:checkint1], read = decode_uint32(privs, privs_read)
       privs_read += read
 
-      checkint2, read = decode_uint32(privs, privs_read)
+      data[:checkint2], read = decode_uint32(privs, privs_read)
       privs_read += read
 
-      unless checkint1 == checkint2
+      unless data[:checkint1] == data[:checkint2]
         raise DecryptError, "bad private key checksum"
       end
 
@@ -173,9 +177,9 @@ module SSHData
       end
 
       # padding at end is bytes 1, 2, 3, 4, etc...
-      padding = privs.byteslice(privs_read..-1)
-      unless padding.bytes.each_with_index.all? { |b, i| b == (i + 1) % 255 }
-        raise DecodeError, "bad padding: #{padding.inspect}"
+      data[:padding] = privs.byteslice(privs_read..-1)
+      unless data[:padding].bytes.each_with_index.all? { |b, i| b == (i + 1) % 255 }
+        raise DecodeError, "bad padding: #{data[:padding].inspect}"
       end
 
       [data, total_read]
