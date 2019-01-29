@@ -27,6 +27,8 @@ module SSHData
           DSA.new(**priv)
         when PublicKey::ALGO_ECDSA256, PublicKey::ALGO_ECDSA384, PublicKey::ALGO_ECDSA521
           ECDSA.new(**priv)
+        when PublicKey::ALGO_ED25519
+          ED25519.new(**priv)
         else
           raise DecodeError, "unkown algo: #{priv[:algo].inspect}"
         end
@@ -39,3 +41,4 @@ require "ssh_data/private_key/base"
 require "ssh_data/private_key/rsa"
 require "ssh_data/private_key/dsa"
 require "ssh_data/private_key/ecdsa"
+require "ssh_data/private_key/ed25519"

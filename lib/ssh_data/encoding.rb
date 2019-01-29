@@ -36,6 +36,12 @@ module SSHData
       [:private_key, :mpint],
     ]
 
+    # Fields in a ED25519 private key
+    ED25519_PRIVATE_KEY_FIELDS = [
+      [:pk, :string],
+      [:sk, :string]
+    ]
+
     # Fields in an RSA public key
     RSA_KEY_FIELDS = [
       [:e, :mpint],
@@ -84,7 +90,8 @@ module SSHData
       PublicKey::ALGO_DSA      => DSA_PRIVATE_KEY_FIELDS,
       PublicKey::ALGO_ECDSA256 => ECDSA_PRIVATE_KEY_FIELDS,
       PublicKey::ALGO_ECDSA384 => ECDSA_PRIVATE_KEY_FIELDS,
-      PublicKey::ALGO_ED25519  => ECDSA_PRIVATE_KEY_FIELDS,
+      PublicKey::ALGO_ECDSA521 => ECDSA_PRIVATE_KEY_FIELDS,
+      PublicKey::ALGO_ED25519  => ED25519_PRIVATE_KEY_FIELDS,
     }
 
     # Get the raw data from a PEM encoded blob.
