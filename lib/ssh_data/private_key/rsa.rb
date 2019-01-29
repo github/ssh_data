@@ -1,7 +1,7 @@
 module SSHData
   module PrivateKey
     class RSA < Base
-      attr_reader :n, :e, :d, :iqmp, :p, :q
+      attr_reader :n, :e, :d, :iqmp, :p, :q, :openssl, :public_key
 
       def initialize(algo:, n:, e:, d:, iqmp:, p:, q:, comment:)
         unless algo == PublicKey::ALGO_RSA
@@ -16,14 +16,10 @@ module SSHData
         @q = q
 
         super(algo: algo, comment: comment)
-      end
 
-      def public_key
-        PublicKey::RSA.new(algo: algo, e: e, n: n)
-      end
+        @openssl = OpenSSL::PKey::RSA.new(asn1.to_der)
 
-      def openssl
-        OpenSSL::PKey::RSA.new(asn1.to_der)
+        @public_key = PublicKey::RSA.new(algo: algo, e: e, n: n)
       end
 
       private
@@ -46,7 +42,7 @@ module SSHData
 
       def asn1
         OpenSSL::ASN1::Sequence.new([
-          OpenSSL::ASN1::Integer.new(OpenSSL::BN.new(0)),
+          OpenSSL::ASN1::Integer.new(0),
           OpenSSL::ASN1::Integer.new(n),
           OpenSSL::ASN1::Integer.new(e),
           OpenSSL::ASN1::Integer.new(d),
