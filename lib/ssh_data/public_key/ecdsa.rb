@@ -64,7 +64,6 @@ module SSHData
           raise DecodeError, "bad curve: #{curve.inspect}"
         end
 
-        @algo = algo
         @curve = curve
         @public_key = public_key
 
@@ -73,6 +72,8 @@ module SSHData
         rescue ArgumentError
           raise DecodeError, "bad key data"
         end
+
+        super(algo: algo)
       end
 
       # Verify an SSH signature.

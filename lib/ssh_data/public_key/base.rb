@@ -4,7 +4,7 @@ module SSHData
       attr_reader :algo
 
       def initialize(**kwargs)
-        raise "implement me"
+        @algo = kwargs[:algo]
       end
 
       def verify(signed_data, signature)

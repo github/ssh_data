@@ -54,13 +54,14 @@ module SSHData
           raise DecodeError, "bad algorithm: #{algo.inspect}"
         end
 
-        @algo = algo
         @p = p
         @q = q
         @g = g
         @y = y
 
         @openssl = OpenSSL::PKey::DSA.new(asn1.to_der)
+
+        super(algo: algo)
       end
 
       # Verify an SSH signature.

@@ -14,12 +14,13 @@ module SSHData
           raise DecodeError, "bad algorithm: #{algo.inspect}"
         end
 
-        @algo = algo
         @pk = pk
 
         if self.class.enabled?
           @ed25519_key = Ed25519::VerifyKey.new(pk)
         end
+
+        super(algo: algo)
       end
 
       # Verify an SSH signature.

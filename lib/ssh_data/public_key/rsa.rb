@@ -13,6 +13,8 @@ module SSHData
         @n = n
 
         @openssl = OpenSSL::PKey::RSA.new(asn1.to_der)
+
+        super(algo: algo)
       end
 
       # Verify an SSH signature.
