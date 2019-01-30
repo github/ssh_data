@@ -20,6 +20,22 @@ describe SSHData::PublicKey::RSA do
     )
   end
 
+  it "is equal to keys with the same params" do
+    expect(subject).to eq(described_class.new(
+      algo: SSHData::PublicKey::ALGO_RSA,
+      e: params["e"],
+      n: params["n"]
+    ))
+  end
+
+  it "isnt equal to keys with different params" do
+    expect(subject).not_to eq(described_class.new(
+      algo: SSHData::PublicKey::ALGO_RSA,
+      e: params["e"] + 1,
+      n: params["n"]
+    ))
+  end
+
   it "has an algo" do
     expect(subject.algo).to eq(SSHData::PublicKey::ALGO_RSA)
   end

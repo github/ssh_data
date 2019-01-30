@@ -17,6 +17,20 @@ describe SSHData::PublicKey::ED25519 do
     )
   end
 
+  it "is equal to keys with the same params" do
+    expect(subject).to eq(described_class.new(
+      algo: SSHData::PublicKey::ALGO_ED25519,
+      pk: verify_key.to_bytes
+    ))
+  end
+
+  it "isnt equal to keys with different params" do
+    expect(subject).not_to eq(described_class.new(
+      algo: SSHData::PublicKey::ALGO_ED25519,
+      pk: verify_key.to_bytes.reverse
+    ))
+  end
+
   it "has an algo" do
     expect(subject.algo).to eq(SSHData::PublicKey::ALGO_ED25519)
   end

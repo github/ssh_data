@@ -45,6 +45,10 @@ module SSHData
           false
         end
       end
+
+      def ==(other)
+        super && other.pk == pk
+      end
     end
   end
 end

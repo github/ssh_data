@@ -127,11 +127,11 @@ module SSHData
     def decode_openssh_private_key(raw)
       total_read = 0
 
-      magic = raw.byteslice(0, total_read + OPENSSH_PRIVATE_KEY_MAGIC.bytesize)
-      total_read += OPENSSH_PRIVATE_KEY_MAGIC.bytesize
+      magic = raw.byteslice(total_read, OPENSSH_PRIVATE_KEY_MAGIC.bytesize)
       unless magic == OPENSSH_PRIVATE_KEY_MAGIC
         raise DecodeError, "bad OpenSSH private key"
       end
+      total_read += OPENSSH_PRIVATE_KEY_MAGIC.bytesize
 
       data, read = decode_fields(raw, OPENSSH_PRIVATE_KEY_FIELDS, total_read)
       total_read += read

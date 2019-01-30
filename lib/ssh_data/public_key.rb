@@ -18,7 +18,17 @@ module SSHData
     # Returns a String fingerprint.
     def self.fingerprint(key, md5: false)
       _, raw, _ = SSHData.key_parts(key)
+      raw_fingerprint(raw, md5: md5)
+    end
 
+    # Calculate the fingerprint of a raw public key.
+    #
+    # raw  - A binary String public key.
+    # md5: - Bool of whether to generate an MD5 fingerprint instead of the
+    #        default SHA256.
+    #
+    # Returns a String fingerprint.
+    def self.raw_fingerprint(raw, md5: false)
       if md5
         # colon separated, hex encoded md5 digest
         OpenSSL::Digest::MD5.digest(raw).unpack("H2" * 16).join(":")

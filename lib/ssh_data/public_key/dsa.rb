@@ -80,6 +80,10 @@ module SSHData
         openssl.verify(OpenSSL::Digest::SHA1.new, openssl_sig, signed_data)
       end
 
+      def ==(other)
+        super && other.p == p && other.q == q && other.g == g && other.y == y
+      end
+
       private
 
       def asn1

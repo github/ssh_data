@@ -32,6 +32,10 @@ module SSHData
         openssl.verify(OpenSSL::Digest::SHA1.new, raw_sig, signed_data)
       end
 
+      def ==(other)
+        super && other.e == e && other.n == n
+      end
+
       private
 
       def asn1

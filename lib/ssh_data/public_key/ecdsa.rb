@@ -94,6 +94,10 @@ module SSHData
         openssl.verify(digest.new, openssl_sig, signed_data)
       end
 
+      def ==(other)
+        super && other.curve == curve && other.public_key_bytes == public_key_bytes
+      end
+
       private
 
       def asn1

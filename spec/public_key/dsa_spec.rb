@@ -23,6 +23,26 @@ describe SSHData::PublicKey::DSA do
     )
   end
 
+  it "is equal to keys with the same params" do
+    expect(subject).to eq(described_class.new(
+      algo: SSHData::PublicKey::ALGO_DSA,
+      p: params["p"],
+      q: params["q"],
+      g: params["g"],
+      y: params["pub_key"]
+    ))
+  end
+
+  it "isnt equal to keys with different params" do
+    expect(subject).not_to eq(described_class.new(
+      algo: SSHData::PublicKey::ALGO_DSA,
+      p: params["p"] + 1,
+      q: params["q"],
+      g: params["g"],
+      y: params["pub_key"]
+    ))
+  end
+
   it "has an algo" do
     expect(subject.algo).to eq(SSHData::PublicKey::ALGO_DSA)
   end
