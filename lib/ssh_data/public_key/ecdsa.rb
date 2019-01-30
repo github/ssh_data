@@ -9,6 +9,12 @@ module SSHData
         "nistp521" => "secp521r1",
       }
 
+      CURVE_FOR_OPENSSL_CURVE_NAME = {
+        "prime256v1" => "nistp256",
+        "secp384r1"  => "nistp384",
+        "secp521r1"  => "nistp521",
+      }
+
       DIGEST_FOR_CURVE = {
         "nistp256" => OpenSSL::Digest::SHA256,
         "nistp384" => OpenSSL::Digest::SHA384,

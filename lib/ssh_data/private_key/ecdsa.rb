@@ -3,6 +3,19 @@ module SSHData
     class ECDSA < Base
       attr_reader :curve, :public_key_bytes, :private_key_bytes, :public_key, :openssl
 
+      def self.from_openssl(key)
+        curve = PublicKey::ECDSA::CURVE_FOR_OPENSSL_CURVE_NAME[key.group.curve_name]
+        algo = "ecdsa-sha2-#{curve}"
+
+        new(
+          algo: algo,
+          curve: curve,
+          public_key: key.public_key.to_bn.to_s(2),
+          private_key: key.private_key,
+          comment: "",
+        )
+      end
+
       def initialize(algo:, curve:, public_key:, private_key:, comment:)
         unless [PublicKey::ALGO_ECDSA256, PublicKey::ALGO_ECDSA384, PublicKey::ALGO_ECDSA521].include?(algo)
           raise DecodeError, "bad algorithm: #{algo.inspect}"

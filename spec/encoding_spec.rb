@@ -2,16 +2,55 @@ require "securerandom"
 require_relative "./spec_helper"
 
 describe SSHData::Encoding do
+  describe "#pem_type" do
+    let(:type) { "FOO BAR" }
+    let(:head) { "-----BEGIN #{type}-----" }
+    let(:foot) { "-----END #{type}-----" }
+    let(:data) { "foobarbaz" }
+    let(:b64)  { Base64.strict_encode64(data) }
+    let(:sep)  { "\n" }
+    let(:pem)  { [head, b64, foot].join(sep) }
+
+    it "works" do
+      expect(described_class.pem_type(pem)).to eq(type)
+    end
+
+    describe "carriage returns" do
+      let(:sep) { "\r\n" }
+
+      it "works" do
+        expect(described_class.pem_type(pem)).to eq(type)
+      end
+    end
+
+    describe "bad header" do
+      let(:head) { "----BEGIN #{type}-----" }
+
+      it "blows up" do
+        expect{ described_class.pem_type(pem) }.to raise_error(SSHData::DecodeError)
+      end
+    end
+  end
+
   describe "#decode_pem" do
     let(:type) { "FOO BAR" }
     let(:head) { "-----BEGIN #{type}-----" }
     let(:foot) { "-----END #{type}-----" }
     let(:data) { "foobarbaz" }
     let(:b64)  { Base64.strict_encode64(data) }
-    let(:pem)  { [head, b64, foot].join("\n") }
+    let(:sep)  { "\n" }
+    let(:pem)  { [head, b64, foot].join(sep) }
 
     it "works" do
       expect(described_class.decode_pem(pem, type)).to eq(data)
+    end
+
+    describe "carriage returns" do
+      let(:sep) { "\r\n" }
+
+      it "works" do
+        expect(described_class.decode_pem(pem, type)).to eq(data)
+      end
     end
 
     describe "bad header" do

@@ -4,21 +4,10 @@ describe SSHData::PrivateKey::DSA do
   let(:private_key) { OpenSSL::PKey::DSA.generate(1024) }
   let(:public_key)  { private_key.public_key }
   let(:params)      { private_key.params }
-  let(:comment)     { "asdf" }
 
   let(:openssh_key) { SSHData::PrivateKey.parse(fixture("dsa_leaf_for_rsa_ca")) }
 
-  subject do
-    described_class.new(
-      algo: SSHData::PublicKey::ALGO_DSA,
-      p: params["p"],
-      q: params["q"],
-      g: params["g"],
-      y: params["pub_key"],
-      x: params["priv_key"],
-      comment: comment,
-    )
-  end
+  subject { described_class.from_openssl(private_key) }
 
   it "has an algo" do
     expect(subject.algo).to eq(SSHData::PublicKey::ALGO_DSA)
@@ -33,7 +22,7 @@ describe SSHData::PrivateKey::DSA do
   end
 
   it "has a comment" do
-    expect(subject.comment).to eq(comment)
+    expect(subject.comment).to eq("")
   end
 
   it "has an openssl representation" do

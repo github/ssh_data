@@ -3,6 +3,18 @@
     class DSA < Base
       attr_reader :p, :q, :g, :x, :y, :openssl, :public_key
 
+      def self.from_openssl(key)
+        new(
+          algo: PublicKey::ALGO_DSA,
+          p: key.params["p"],
+          q: key.params["q"],
+          g: key.params["g"],
+          y: key.params["pub_key"],
+          x: key.params["priv_key"],
+          comment: "",
+        )
+      end
+
       def initialize(algo:, p:, q:, g:, x:, y:, comment:)
         unless algo == PublicKey::ALGO_DSA
           raise DecodeError, "bad algorithm: #{algo.inspect}"

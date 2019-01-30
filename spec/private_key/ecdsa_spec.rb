@@ -18,15 +18,7 @@ describe SSHData::PrivateKey::ECDSA do
       let(:public_key)  { OpenSSL::PKey::EC.new(private_key.to_der).tap { |k| k.private_key = nil } }
       let(:comment)     { "asdf" }
 
-      subject do
-        described_class.new(
-          algo: algo,
-          curve: ssh_curve,
-          public_key: public_key.public_key.to_bn.to_s(2),
-          private_key: private_key.private_key,
-          comment: comment,
-        )
-      end
+      subject { described_class.from_openssl(private_key) }
 
       it "has an algo" do
         expect(subject.algo).to eq(algo)
@@ -39,7 +31,7 @@ describe SSHData::PrivateKey::ECDSA do
       end
 
       it "has a comment" do
-        expect(subject.comment).to eq(comment)
+        expect(subject.comment).to eq("")
       end
 
       it "has an openssl representation" do

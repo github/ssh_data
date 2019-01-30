@@ -94,6 +94,26 @@ module SSHData
       PublicKey::ALGO_ED25519  => ED25519_PRIVATE_KEY_FIELDS,
     }
 
+    # Get the type from a PEM encoded blob.
+    #
+    # pem - A PEM encoded String.
+    #
+    # Returns a String PEM type.
+    def pem_type(pem)
+      head = pem.split("\n", 2).first.strip
+
+      head_prefix = "-----BEGIN "
+      head_suffix = "-----"
+
+      unless head.start_with?(head_prefix) && head.end_with?(head_suffix)
+        raise DecodeError, "bad PEM encoding"
+      end
+
+      type_size = head.bytesize - head_prefix.bytesize - head_suffix.bytesize
+
+      head.byteslice(head_prefix.bytesize, type_size)
+    end
+
     # Get the raw data from a PEM encoded blob.
     #
     # pem  - The PEM encoded String to decode.
@@ -101,7 +121,7 @@ module SSHData
     #
     # Returns the decoded String.
     def decode_pem(pem, type)
-      lines = pem.split("\n")
+      lines = pem.split("\n").map(&:strip)
 
       unless lines.shift == "-----BEGIN #{type}-----"
         raise DecodeError, "bad PEM header"
