@@ -1,7 +1,7 @@
 module SSHData
   module PrivateKey
     class RSA < Base
-      attr_reader :n, :e, :d, :iqmp, :p, :q, :openssl, :public_key
+      attr_reader :n, :e, :d, :iqmp, :p, :q, :openssl
 
       def self.from_openssl(key)
         new(

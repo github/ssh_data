@@ -5,11 +5,11 @@ describe SSHData::PublicKey do
     name = File.basename(path)
 
     it "generates a MD5 fingerprint matching ssh-keygen for #{name}" do
-      expect(described_class.fingerprint(fixture(name), md5: true)).to eq(ssh_keygen_fingerprint(name, :md5))
+      expect(described_class.parse(fixture(name)).fingerprint(md5: true)).to eq(ssh_keygen_fingerprint(name, :md5))
     end
 
     it "generates a SHA256 fingerprint matching ssh-keygen for #{name}" do
-      expect(described_class.fingerprint(fixture(name))).to eq(ssh_keygen_fingerprint(name, :sha256))
+      expect(described_class.parse(fixture(name)).fingerprint).to eq(ssh_keygen_fingerprint(name, :sha256))
     end
   end
 end

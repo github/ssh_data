@@ -1,7 +1,7 @@
 module SSHData
   module PrivateKey
     class ECDSA < Base
-      attr_reader :curve, :public_key_bytes, :private_key_bytes, :public_key, :openssl
+      attr_reader :curve, :public_key_bytes, :private_key_bytes, :openssl
 
       def self.from_openssl(key)
         curve = PublicKey::ECDSA::CURVE_FOR_OPENSSL_CURVE_NAME[key.group.curve_name]

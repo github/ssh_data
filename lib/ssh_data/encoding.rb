@@ -341,6 +341,29 @@ module SSHData
       [hash, total_read]
     end
 
+    # Encode the series of fiends into a binary string.
+    #
+    # fields - A series of Arrays, each containing a Symbol type and a value to
+    #          encode.
+    #
+    # Returns a binary String.
+    def encode_fields(*fields)
+      fields.map do |type, value|
+        case type
+        when :string
+          encode_string(value)
+        when :mpint
+          encode_mpint(value)
+        when :uint64
+          encode_uint64(value)
+        when :uint32
+          encode_uint32(value)
+        else
+          raise DecodeError
+        end
+      end.join
+    end
+
     # Read a string out of the provided raw data.
     #
     # raw    - A binary String.
@@ -368,11 +391,11 @@ module SSHData
 
     # Encoding a string.
     #
-    # string - The String to encode.
+    # value - The String value to encode.
     #
     # Returns an encoded representation of the String.
-    def encode_string(string)
-      [string.bytesize, string].pack("L>A*")
+    def encode_string(value)
+      [value.bytesize, value].pack("L>A*")
     end
 
     # Read a series of strings out of the provided raw data.
@@ -478,13 +501,12 @@ module SSHData
 
     # Encoding a BN as an mpint.
     #
-    # bn - The OpenSSL::BN to encode.
+    # value - The OpenSSL::BN value to encode.
     #
     # Returns an encoded representation of the BN.
-    def encode_mpint(bn)
-      bn.to_s(0)
+    def encode_mpint(value)
+      value.to_s(0)
     end
-
 
     # Read a uint64 from the provided raw data.
     #
@@ -503,6 +525,15 @@ module SSHData
       [uint64, 8]
     end
 
+    # Encoding an integer as a uint64.
+    #
+    # value - The Integer value to encode.
+    #
+    # Returns an encoded representation of the value.
+    def encode_uint64(value)
+      [value].pack("Q>")
+    end
+
     # Read a uint32 from the provided raw data.
     #
     # raw    - A binary String.
@@ -518,6 +549,15 @@ module SSHData
       uint32 = raw.byteslice(offset, 4).unpack("L>").first
 
       [uint32, 4]
+    end
+
+    # Encoding an integer as a uint32.
+    #
+    # value - The Integer value to encode.
+    #
+    # Returns an encoded representation of the value.
+    def encode_uint32(value)
+      [value].pack("L>")
     end
 
     extend self

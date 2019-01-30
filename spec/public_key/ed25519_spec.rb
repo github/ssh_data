@@ -53,6 +53,10 @@ describe SSHData::PublicKey::ED25519 do
     expect { openssh_key.ed25519_key }.not_to raise_error
   end
 
+  it "can be rencoded" do
+    expect(openssh_key.raw).to eq(fixture("ed25519_leaf_for_rsa_ca.pub", binary: true))
+  end
+
   it "can verify certificate signatures" do
     expect {
       SSHData::Certificate.parse(fixture("rsa_leaf_for_ed25519_ca-cert.pub"),

@@ -1,7 +1,7 @@
   module SSHData
   module PrivateKey
     class DSA < Base
-      attr_reader :p, :q, :g, :x, :y, :openssl, :public_key
+      attr_reader :p, :q, :g, :x, :y, :openssl
 
       def self.from_openssl(key)
         new(

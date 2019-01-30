@@ -1,7 +1,7 @@
 module SSHData
   module PrivateKey
     class ED25519 < Base
-      attr_reader :pk, :sk, :public_key, :ed25519_key
+      attr_reader :pk, :sk, :ed25519_key
 
       def initialize(algo:, pk:, sk:, comment:)
         unless algo == PublicKey::ALGO_ED25519

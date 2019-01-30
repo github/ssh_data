@@ -1,27 +1,26 @@
 require_relative "./spec_helper"
 
 describe SSHData::PrivateKey do
-  Dir["spec/fixtures/*for_rsa_ca"].each do |path|
+  (Dir["spec/fixtures/*for_rsa_ca"] + Dir["spec/fixtures/*.pem"]).each do |path|
     name = File.basename(path)
 
-    it "can parse #{name}" do
-      expect { described_class.parse(fixture(name)) }.not_to raise_error
-    end
+    describe name do
+      let(:sha256_fpr) { ssh_keygen_fingerprint(name, :sha256, priv: true) }
+      let(:md5_fpr)    { ssh_keygen_fingerprint(name, :md5,    priv: true) }
 
-    it "generates a MD5 fingerprint matching ssh-keygen for #{name}" do
-      expect(described_class.fingerprint(fixture(name), md5: true)).to eq([ssh_keygen_fingerprint(name, :md5, priv: true)])
-    end
+      subject { described_class.parse(fixture(name)).first }
 
-    it "generates a SHA256 fingerprint matching ssh-keygen for #{name}" do
-      expect(described_class.fingerprint(fixture(name))).to eq([ssh_keygen_fingerprint(name, :sha256, priv: true)])
-    end
-  end
+      it "can parse" do
+        expect { subject }.not_to raise_error
+      end
 
-  Dir["spec/fixtures/*.pem"].each do |path|
-    name = File.basename(path)
+      it "generates a MD5 fingerprint matching ssh-keygen" do
+        expect(subject.public_key.fingerprint(md5: true)).to eq(md5_fpr)
+      end
 
-    it "can parse #{name}" do
-      expect { described_class.parse(fixture(name)) }.not_to raise_error
+      it "generates a SHA256 fingerprint matching ssh-keygen" do
+        expect(subject.public_key.fingerprint).to eq(sha256_fpr)
+      end
     end
   end
 end
