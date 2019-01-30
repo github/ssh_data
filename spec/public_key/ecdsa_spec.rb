@@ -50,6 +50,24 @@ describe SSHData::PublicKey::ECDSA do
         )
       end
 
+      it "is equal to keys with the same params" do
+        expect(subject).to eq(described_class.new(
+          algo: algo,
+          curve: ssh_curve,
+          public_key: public_key.public_key.to_bn.to_s(2)
+        ))
+      end
+
+      it "isnt equal to keys with different params" do
+        other_key = OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key)
+
+        expect(subject).not_to eq(described_class.new(
+          algo: algo,
+          curve: ssh_curve,
+          public_key: other_key.public_key.to_bn.to_s(2)
+        ))
+      end
+
       it "has an algo" do
         expect(subject.algo).to eq(algo)
       end

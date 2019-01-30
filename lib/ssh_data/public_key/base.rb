@@ -10,6 +10,10 @@ module SSHData
       def verify(signed_data, signature)
         raise "implement me"
       end
+
+      def ==(other)
+        other.class == self.class
+      end
     end
   end
 end
