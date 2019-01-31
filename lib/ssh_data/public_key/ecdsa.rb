@@ -9,6 +9,12 @@ module SSHData
         "nistp521" => "secp521r1",
       }
 
+      CURVE_FOR_OPENSSL_CURVE_NAME = {
+        "prime256v1" => "nistp256",
+        "secp384r1"  => "nistp384",
+        "secp521r1"  => "nistp521",
+      }
+
       DIGEST_FOR_CURVE = {
         "nistp256" => OpenSSL::Digest::SHA256,
         "nistp384" => OpenSSL::Digest::SHA384,
@@ -94,6 +100,22 @@ module SSHData
         openssl.verify(digest.new, openssl_sig, signed_data)
       end
 
+      # Raw encoding of public key.
+      #
+      # Returns a binary String.
+      def raw
+        Encoding.encode_fields(
+          [:string, algo],
+          [:string, curve],
+          [:string, public_key_bytes],
+        )
+      end
+
+      # Is this public key equal to another public key?
+      #
+      # other - Another SSHData::PublicKey::Base instance to compare with.
+      #
+      # Returns boolean.
       def ==(other)
         super && other.curve == curve && other.public_key_bytes == public_key_bytes
       end

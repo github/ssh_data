@@ -46,6 +46,21 @@ module SSHData
         end
       end
 
+      # Raw encoding of public key.
+      #
+      # Returns a binary String.
+      def raw
+        Encoding.encode_fields(
+          [:string, algo],
+          [:string, pk],
+        )
+      end
+
+      # Is this public key equal to another public key?
+      #
+      # other - Another SSHData::PublicKey::Base instance to compare with.
+      #
+      # Returns boolean.
       def ==(other)
         super && other.pk == pk
       end

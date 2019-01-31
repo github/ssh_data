@@ -7,10 +7,44 @@ module SSHData
         @algo = kwargs[:algo]
       end
 
+      # Calculate the fingerprint of this public key.
+      #
+      # md5: - Bool of whether to generate an MD5 fingerprint instead of the
+      #        default SHA256.
+      #
+      # Returns a String fingerprint.
+      def fingerprint(md5: false)
+        if md5
+          # colon separated, hex encoded md5 digest
+          OpenSSL::Digest::MD5.digest(raw).unpack("H2" * 16).join(":")
+        else
+          # base64 encoded sha256 digest with b64 padding stripped
+          Base64.strict_encode64(OpenSSL::Digest::SHA256.digest(raw))[0...-1]
+        end
+      end
+
+      # Verify an SSH signature.
+      #
+      # signed_data - The String message that the signature was calculated over.
+      # signature   - The binarty String signature with SSH encoding.
+      #
+      # Returns boolean.
       def verify(signed_data, signature)
         raise "implement me"
       end
 
+      # Raw encoding of public key.
+      #
+      # Returns a binary String.
+      def raw
+        raise "implement me"
+      end
+
+      # Is this public key equal to another public key?
+      #
+      # other - Another SSHData::PublicKey::Base instance to compare with.
+      #
+      # Returns boolean.
       def ==(other)
         other.class == self.class
       end

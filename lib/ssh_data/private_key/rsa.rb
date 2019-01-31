@@ -1,7 +1,20 @@
 module SSHData
   module PrivateKey
     class RSA < Base
-      attr_reader :n, :e, :d, :iqmp, :p, :q, :openssl, :public_key
+      attr_reader :n, :e, :d, :iqmp, :p, :q, :openssl
+
+      def self.from_openssl(key)
+        new(
+          algo: PublicKey::ALGO_RSA,
+          n: key.params["n"],
+          e: key.params["e"],
+          d: key.params["d"],
+          iqmp: key.params["iqmp"],
+          p: key.params["p"],
+          q: key.params["q"],
+          comment: "",
+        )
+      end
 
       def initialize(algo:, n:, e:, d:, iqmp:, p:, q:, comment:)
         unless algo == PublicKey::ALGO_RSA

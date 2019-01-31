@@ -80,6 +80,24 @@ module SSHData
         openssl.verify(OpenSSL::Digest::SHA1.new, openssl_sig, signed_data)
       end
 
+      # Raw encoding of public key.
+      #
+      # Returns a binary String.
+      def raw
+        Encoding.encode_fields(
+          [:string, algo],
+          [:mpint, p],
+          [:mpint, q],
+          [:mpint, g],
+          [:mpint, y],
+        )
+      end
+
+      # Is this public key equal to another public key?
+      #
+      # other - Another SSHData::PublicKey::Base instance to compare with.
+      #
+      # Returns boolean.
       def ==(other)
         super && other.p == p && other.q == q && other.g == g && other.y == y
       end
