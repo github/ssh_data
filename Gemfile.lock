@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ssh_data (0.0.7)
+    ssh_data (0.0.8)
 
 GEM
   remote: https://rubygems.org/
