@@ -21,6 +21,8 @@ module SSHData
       when ECDSA_PEM_TYPE
         [ECDSA.from_openssl(OpenSSL::PKey::EC.new(key))]
       end
+    rescue OpenSSL::PKey::PKeyError => e
+      raise DecodeError, "bad private key. maybe encrypted?"
     end
 
     def self.parse_openssh(key)
