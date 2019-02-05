@@ -23,4 +23,14 @@ describe SSHData::PrivateKey do
       end
     end
   end
+
+  it "raises on unknown PEM types" do
+    expect {
+      described_class.parse(<<-PEM.gsub(/^ /, ""))
+      -----BEGIN FOOBAR-----
+      asdf
+      -----END FOOBAR-----
+    PEM
+    }.to raise_error(SSHData::AlgorithmError)
+  end
 end
