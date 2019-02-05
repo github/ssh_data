@@ -1,9 +1,10 @@
 module SSHData
   module PrivateKey
-    OPENSSH_PEM_TYPE = "OPENSSH PRIVATE KEY"
-    RSA_PEM_TYPE     = "RSA PRIVATE KEY"
-    DSA_PEM_TYPE     = "DSA PRIVATE KEY"
-    ECDSA_PEM_TYPE   = "EC PRIVATE KEY"
+    OPENSSH_PEM_TYPE   = "OPENSSH PRIVATE KEY"
+    RSA_PEM_TYPE       = "RSA PRIVATE KEY"
+    DSA_PEM_TYPE       = "DSA PRIVATE KEY"
+    ECDSA_PEM_TYPE     = "EC PRIVATE KEY"
+    ENCRYPTED_PEM_TYPE = "ENCRYPTED PRIVATE KEY"
 
     # Parse an SSH private key.
     #
@@ -11,7 +12,8 @@ module SSHData
     #
     # Returns an Array of PrivateKey::Base subclass instances.
     def self.parse(key)
-      case Encoding.pem_type(key)
+      pem_type = Encoding.pem_type(key)
+      case pem_type
       when OPENSSH_PEM_TYPE
         parse_openssh(key)
       when RSA_PEM_TYPE
@@ -20,6 +22,10 @@ module SSHData
         [DSA.from_openssl(OpenSSL::PKey::DSA.new(key))]
       when ECDSA_PEM_TYPE
         [ECDSA.from_openssl(OpenSSL::PKey::EC.new(key))]
+      when ENCRYPTED_PEM_TYPE
+        raise DecryptError, "cannot decode encrypted private keys"
+      else
+        raise AlgorithmError, "unknown PEM type: #{pem_type.inspect}"
       end
     rescue OpenSSL::PKey::PKeyError => e
       raise DecodeError, "bad private key. maybe encrypted?"
