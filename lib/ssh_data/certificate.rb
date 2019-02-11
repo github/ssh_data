@@ -12,6 +12,11 @@ module SSHData
     ALGO_ECDSA521 = "ecdsa-sha2-nistp521-cert-v01@openssh.com"
     ALGO_ED25519  = "ssh-ed25519-cert-v01@openssh.com"
 
+    ALGOS = [
+      ALGO_RSA, ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
+      ALGO_ED25519
+    ]
+
     attr_reader :algo, :nonce, :public_key, :serial, :type, :key_id,
                 :valid_principals, :valid_after, :valid_before,
                 :critical_options, :extensions, :reserved, :ca_key, :signature

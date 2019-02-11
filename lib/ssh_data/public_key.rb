@@ -8,6 +8,11 @@ module SSHData
     ALGO_ECDSA521 = "ecdsa-sha2-nistp521"
     ALGO_ED25519  = "ssh-ed25519"
 
+    ALGOS = [
+      ALGO_RSA, ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
+      ALGO_ED25519
+    ]
+
     # Parse an OpenSSH public key in authorized_keys format (see sshd(8) manual
     # page).
     #
