@@ -14,11 +14,11 @@ gem install ssh_data
 require "ssh_data"
 
 key_data = File.read("~/.ssh/id_rsa.pub")
-key = SSHData::PublicKey.parse(key_data)
+key = SSHData::PublicKey.parse_openssh(key_data)
 #=> <SSHData::PublicKey::RSA>
 
 cert_data = = File.read("~/.ssh/id_rsa-cert.pub")
-cert = SSHData::Certificate.parse(cert_data)
+cert = SSHData::Certificate.parse_openssh(cert_data)
 #=> <SSHData::PublicKey::Certificate>
 
 cert.key_id

@@ -25,7 +25,7 @@ module SSHData
     #                     (Default false)
     #
     # Returns a Certificate instance.
-    def self.parse(cert, unsafe_no_verify: false)
+    def self.parse_openssh(cert, unsafe_no_verify: false)
       algo, raw, _ = SSHData.key_parts(cert)
       parsed = parse_rfc4253(raw, unsafe_no_verify: unsafe_no_verify)
 

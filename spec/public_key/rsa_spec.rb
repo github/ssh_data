@@ -10,7 +10,7 @@ describe SSHData::PublicKey::RSA do
   let(:raw_sig) { private_key.sign(digest, msg) }
   let(:sig)     { SSHData::Encoding.encode_signature(SSHData::PublicKey::ALGO_RSA, raw_sig) }
 
-  let(:openssh_key) { SSHData::PublicKey.parse(fixture("rsa_leaf_for_rsa_ca.pub")) }
+  let(:openssh_key) { SSHData::PublicKey.parse_openssh(fixture("rsa_leaf_for_rsa_ca.pub")) }
 
   subject do
     described_class.new(
@@ -65,7 +65,7 @@ describe SSHData::PublicKey::RSA do
 
   it "can verify certificate signatures" do
     expect {
-      SSHData::Certificate.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub"),
+      SSHData::Certificate.parse_openssh(fixture("rsa_leaf_for_rsa_ca-cert.pub"),
         unsafe_no_verify: false
       )
     }.not_to raise_error

@@ -15,7 +15,7 @@ module SSHData
     #       and optional comment.
     #
     # Returns a PublicKey::Base subclass instance.
-    def self.parse(key)
+    def self.parse_openssh(key)
       algo, raw, _ = SSHData.key_parts(key)
       parsed = parse_rfc4253(raw)
 

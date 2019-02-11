@@ -1,28 +1,28 @@
 require_relative "./spec_helper"
 
 describe SSHData::Certificate do
-  let(:rsa_cert)     { described_class.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub")) }
-  let(:dsa_cert)     { described_class.parse(fixture("dsa_leaf_for_rsa_ca-cert.pub")) }
-  let(:ecdsa_cert)   { described_class.parse(fixture("ecdsa_leaf_for_rsa_ca-cert.pub")) }
-  let(:ed25519_cert) { described_class.parse(fixture("ed25519_leaf_for_rsa_ca-cert.pub")) }
+  let(:rsa_cert)     { described_class.parse_openssh(fixture("rsa_leaf_for_rsa_ca-cert.pub")) }
+  let(:dsa_cert)     { described_class.parse_openssh(fixture("dsa_leaf_for_rsa_ca-cert.pub")) }
+  let(:ecdsa_cert)   { described_class.parse_openssh(fixture("ecdsa_leaf_for_rsa_ca-cert.pub")) }
+  let(:ed25519_cert) { described_class.parse_openssh(fixture("ed25519_leaf_for_rsa_ca-cert.pub")) }
 
-  let(:rsa_ca_cert)     { described_class.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub")) }
-  let(:dsa_ca_cert)     { described_class.parse(fixture("rsa_leaf_for_dsa_ca-cert.pub")) }
-  let(:ecdsa_ca_cert)   { described_class.parse(fixture("rsa_leaf_for_ecdsa_ca-cert.pub")) }
-  let(:ed25519_ca_cert) { described_class.parse(fixture("rsa_leaf_for_ed25519_ca-cert.pub")) }
+  let(:rsa_ca_cert)     { described_class.parse_openssh(fixture("rsa_leaf_for_rsa_ca-cert.pub")) }
+  let(:dsa_ca_cert)     { described_class.parse_openssh(fixture("rsa_leaf_for_dsa_ca-cert.pub")) }
+  let(:ecdsa_ca_cert)   { described_class.parse_openssh(fixture("rsa_leaf_for_ecdsa_ca-cert.pub")) }
+  let(:ed25519_ca_cert) { described_class.parse_openssh(fixture("rsa_leaf_for_ed25519_ca-cert.pub")) }
 
   let(:min_time) { Time.at(0) }
   let(:max_time) { Time.at((2**64)-1) }
 
   it "raises on invalid signatures" do
     expect {
-      described_class.parse(fixture("bad_signature-cert.pub"))
+      described_class.parse_openssh(fixture("bad_signature-cert.pub"))
     }.to raise_error(SSHData::VerifyError)
   end
 
   it "doesn't validate signatures if provided unsafe_no_verify flag" do
     expect {
-      described_class.parse(fixture("bad_signature-cert.pub"),
+      described_class.parse_openssh(fixture("bad_signature-cert.pub"),
         unsafe_no_verify: true
       )
     }.not_to raise_error
@@ -36,7 +36,7 @@ describe SSHData::Certificate do
     cert = [algo, b64, comment].join(" ")
 
     expect {
-      described_class.parse(cert, unsafe_no_verify: true)
+      described_class.parse_openssh(cert, unsafe_no_verify: true)
     }.to raise_error(SSHData::DecodeError)
   end
 
@@ -45,7 +45,7 @@ describe SSHData::Certificate do
     cert = [SSHData::Certificate::ALGO_ED25519, b64, comment].join(" ")
 
     expect {
-      described_class.parse(cert, unsafe_no_verify: true)
+      described_class.parse_openssh(cert, unsafe_no_verify: true)
     }.to raise_error(SSHData::DecodeError)
   end
 
@@ -54,7 +54,7 @@ describe SSHData::Certificate do
     cert = [type, b64].join(" ")
 
     expect {
-      described_class.parse(cert, unsafe_no_verify: true)
+      described_class.parse_openssh(cert, unsafe_no_verify: true)
     }.not_to raise_error
   end
 
