@@ -16,7 +16,7 @@ module SSHData
     # Returns a PublicKey::Base subclass instance.
     def self.parse(key)
       algo, raw, _ = SSHData.key_parts(key)
-      parsed = parse_raw(raw)
+      parsed = parse_rfc4253(raw)
 
       if parsed.algo != algo
         raise DecodeError, "algo mismatch: #{parsed.algo.inspect}!=#{algo.inspect}"
@@ -25,12 +25,12 @@ module SSHData
       parsed
     end
 
-    # Parse an SSH public key.
+    # Parse an RFC 4253 binary SSH public key.
     #
-    # key - A raw binary public key String.
+    # key - A RFC 4253 binary public key String.
     #
     # Returns a PublicKey::Base subclass instance.
-    def self.parse_raw(raw)
+    def self.parse_rfc4253(raw)
       data, read = Encoding.decode_public_key(raw)
 
       if read != raw.bytesize

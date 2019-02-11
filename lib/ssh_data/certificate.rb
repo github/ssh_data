@@ -26,7 +26,7 @@ module SSHData
     # Returns a Certificate instance.
     def self.parse(cert, unsafe_no_verify: false)
       algo, raw, _ = SSHData.key_parts(cert)
-      parsed = parse_raw(raw, unsafe_no_verify: unsafe_no_verify)
+      parsed = parse_rfc4253(raw, unsafe_no_verify: unsafe_no_verify)
 
       if parsed.algo != algo
         raise DecodeError, "algo mismatch: #{parsed.algo.inspect}!=#{algo.inspect}"
@@ -35,14 +35,14 @@ module SSHData
       parsed
     end
 
-    # Parse an SSH certificate.
+    # Parse an RFC 4253 binary SSH certificate.
     #
-    # cert              - A raw binary certificate String.
+    # cert              - A RFC 4253 binary certificate String.
     # unsafe_no_verify: - Bool of whether to skip verifying certificate
     #                     signature (Default false)
     #
     # Returns a Certificate instance.
-    def self.parse_raw(raw, unsafe_no_verify: false)
+    def self.parse_rfc4253(raw, unsafe_no_verify: false)
       data, read = Encoding.decode_certificate(raw)
 
       if read != raw.bytesize

@@ -110,7 +110,7 @@ describe SSHData::Encoding do
       expect(rsa_data[:public_keys]).to be_a(Array)
       expect(rsa_data[:public_keys].length).to eq(1)
       expect {
-        SSHData::PublicKey.parse_raw(rsa_data[:public_keys].first)
+        SSHData::PublicKey.parse_rfc4253(rsa_data[:public_keys].first)
       }.not_to raise_error
 
       expect(rsa_data[:checkint1]).to be_a(Integer)
@@ -133,7 +133,7 @@ describe SSHData::Encoding do
       expect(dsa_data[:public_keys]).to be_a(Array)
       expect(dsa_data[:public_keys].length).to eq(1)
       expect {
-        SSHData::PublicKey.parse_raw(dsa_data[:public_keys].first)
+        SSHData::PublicKey.parse_rfc4253(dsa_data[:public_keys].first)
       }.not_to raise_error
 
       expect(dsa_data[:checkint1]).to be_a(Integer)
@@ -156,7 +156,7 @@ describe SSHData::Encoding do
       expect(ecdsa_data[:public_keys]).to be_a(Array)
       expect(ecdsa_data[:public_keys].length).to eq(1)
       expect {
-        SSHData::PublicKey.parse_raw(ecdsa_data[:public_keys].first)
+        SSHData::PublicKey.parse_rfc4253(ecdsa_data[:public_keys].first)
       }.not_to raise_error
 
       expect(ecdsa_data[:checkint1]).to be_a(Integer)
@@ -179,7 +179,7 @@ describe SSHData::Encoding do
       expect(ed25519_data[:public_keys]).to be_a(Array)
       expect(ed25519_data[:public_keys].length).to eq(1)
       expect {
-        SSHData::PublicKey.parse_raw(ed25519_data[:public_keys].first)
+        SSHData::PublicKey.parse_rfc4253(ed25519_data[:public_keys].first)
       }.not_to raise_error
 
       expect(ed25519_data[:checkint1]).to be_a(Integer)
