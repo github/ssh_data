@@ -8,7 +8,7 @@ module SSHData
 
     # Parse an SSH private key.
     #
-    # key - An PEM encoded OpenSSH private key.
+    # key - A PEM or OpenSSH encoded private key.
     #
     # Returns an Array of PrivateKey::Base subclass instances.
     def self.parse(key)
@@ -31,6 +31,11 @@ module SSHData
       raise DecodeError, "bad private key. maybe encrypted?"
     end
 
+    # Parse an OpenSSH formatted private key.
+    #
+    # key - An OpenSSH encoded private key.
+    #
+    # Returns an Array of PrivateKey::Base subclass instances.
     def self.parse_openssh(key)
       raw = Encoding.decode_pem(key, OPENSSH_PEM_TYPE)
 

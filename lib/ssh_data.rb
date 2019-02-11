@@ -2,15 +2,16 @@ require "openssl"
 require "base64"
 
 module SSHData
-  # Break down a public key or certificate into its algorith, raw key, and host.
+  # Break down a key in OpenSSH authorized_keys format (see sshd(8) manual
+  # page).
   #
-  # key - An SSH formatted public key or certificate, including algo, encoded
-  #       key and optional user/host names.
+  # key - An OpenSSH formatted public key or certificate, including algo,
+  #       base64 encoded key and optional comment.
   #
   # Returns an Array containing the algorithm String , the raw key or
-  # certificate String and the host String or nil.
+  # certificate String and the comment String or nil.
   def key_parts(key)
-    algo, b64, host = key.strip.split(" ", 3)
+    algo, b64, comment = key.strip.split(" ", 3)
     if algo.nil? || b64.nil?
       raise DecodeError, "bad data format"
     end
@@ -21,7 +22,7 @@ module SSHData
       raise DecodeError, "bad data format"
     end
 
-    [algo, raw, host]
+    [algo, raw, comment]
   end
 
   extend self

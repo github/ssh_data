@@ -41,14 +41,14 @@ ruby <<RUBY
 require "base64"
 
 encoded = File.read("rsa_leaf_for_ed25519_ca-cert.pub")
-algo, b64, host = encoded.split(" ", 3)
+algo, b64, comment = encoded.split(" ", 3)
 raw = Base64.decode64(b64)
 
 # we flip bits in the last byte, since that's where the signature is.
 raw[-1] = (raw[-1].ord ^ 0xff).chr
 
 b64 = Base64.strict_encode64(raw)
-encoded = [algo, b64, host].join(" ")
+encoded = [algo, b64, comment].join(" ")
 
 File.open("bad_signature-cert.pub", "w") { |f| f.write(encoded) }
 RUBY

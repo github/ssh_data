@@ -29,11 +29,11 @@ describe SSHData::Certificate do
   end
 
   it "raises on trailing data" do
-    algo, b64, host = fixture("rsa_leaf_for_rsa_ca-cert.pub").split(" ", 3)
+    algo, b64, comment = fixture("rsa_leaf_for_rsa_ca-cert.pub").split(" ", 3)
     raw = Base64.decode64(b64)
     raw += "foobar"
     b64 = Base64.strict_encode64(raw)
-    cert = [algo, b64, host].join(" ")
+    cert = [algo, b64, comment].join(" ")
 
     expect {
       described_class.parse(cert, unsafe_no_verify: true)
@@ -41,15 +41,15 @@ describe SSHData::Certificate do
   end
 
   it "raises on type mismatch" do
-    _, b64, host = fixture("rsa_leaf_for_rsa_ca-cert.pub").split(" ", 3)
-    cert = [SSHData::Certificate::ALGO_ED25519, b64, host].join(" ")
+    _, b64, comment = fixture("rsa_leaf_for_rsa_ca-cert.pub").split(" ", 3)
+    cert = [SSHData::Certificate::ALGO_ED25519, b64, comment].join(" ")
 
     expect {
       described_class.parse(cert, unsafe_no_verify: true)
     }.to raise_error(SSHData::DecodeError)
   end
 
-  it "doesn't require the user/host names" do
+  it "doesn't require the comment" do
     type, b64, _ = fixture("rsa_leaf_for_rsa_ca-cert.pub").split(" ", 3)
     cert = [type, b64].join(" ")
 

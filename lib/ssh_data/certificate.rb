@@ -16,10 +16,11 @@ module SSHData
                 :valid_principals, :valid_after, :valid_before,
                 :critical_options, :extensions, :reserved, :ca_key, :signature
 
-    # Parse an SSH certificate.
+    # Parse an OpenSSH certificate in authorized_keys format (see sshd(8) manual
+    # page).
     #
-    # cert              - An SSH formatted certificate, including key algo,
-    #                     encoded key and optional user/host names.
+    # cert              - An OpenSSH formatted certificate, including key algo,
+    #                     base64 encoded key and optional comment.
     # unsafe_no_verify: - Bool of whether to skip verifying certificate signature
     #                     (Default false)
     #

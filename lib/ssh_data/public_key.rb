@@ -8,10 +8,11 @@ module SSHData
     ALGO_ECDSA521 = "ecdsa-sha2-nistp521"
     ALGO_ED25519  = "ssh-ed25519"
 
-    # Parse an SSH public key.
+    # Parse an OpenSSH public key in authorized_keys format (see sshd(8) manual
+    # page).
     #
-    # key - An SSH formatted public key, including algo, encoded key and optional
-    #       user/host names.
+    # key - An OpenSSH formatted public key, including algo, base64 encoded key
+    #       and optional comment.
     #
     # Returns a PublicKey::Base subclass instance.
     def self.parse(key)
