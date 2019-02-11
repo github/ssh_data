@@ -26,6 +26,9 @@ module SSHData
       parsed
     end
 
+    # Deprecated
+    singleton_class.send(:alias_method, :parse, :parse_openssh)
+
     # Parse an RFC 4253 binary SSH public key.
     #
     # key - A RFC 4253 binary public key String.

@@ -1,6 +1,12 @@
 require_relative "./spec_helper"
 
 describe SSHData::PublicKey do
+  it "supports the deprecated PublicKey.parse method" do
+    expect {
+      described_class.parse(fixture("rsa_leaf_for_rsa_ca.pub"))
+    }.not_to raise_error
+  end
+
   Dir["spec/fixtures/*ca.pub"].each do |path|
     name = File.basename(path)
 

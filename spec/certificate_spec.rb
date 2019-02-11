@@ -14,6 +14,12 @@ describe SSHData::Certificate do
   let(:min_time) { Time.at(0) }
   let(:max_time) { Time.at((2**64)-1) }
 
+  it "supports the deprecated Certificate.parse method" do
+    expect {
+      described_class.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub"))
+    }.not_to raise_error
+  end
+
   it "raises on invalid signatures" do
     expect {
       described_class.parse_openssh(fixture("bad_signature-cert.pub"))
