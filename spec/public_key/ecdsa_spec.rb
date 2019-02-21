@@ -8,7 +8,7 @@ describe SSHData::PublicKey::ECDSA do
   end
 
   it "can be rencoded" do
-    expect(openssh_key.raw).to eq(fixture("ecdsa_leaf_for_rsa_ca.pub", binary: true))
+    expect(openssh_key.rfc4253).to eq(fixture("ecdsa_leaf_for_rsa_ca.pub", binary: true))
   end
 
   it "can verify certificate signatures" do

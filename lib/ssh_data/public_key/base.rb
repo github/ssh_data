@@ -16,10 +16,10 @@ module SSHData
       def fingerprint(md5: false)
         if md5
           # colon separated, hex encoded md5 digest
-          OpenSSL::Digest::MD5.digest(raw).unpack("H2" * 16).join(":")
+          OpenSSL::Digest::MD5.digest(rfc4253).unpack("H2" * 16).join(":")
         else
           # base64 encoded sha256 digest with b64 padding stripped
-          Base64.strict_encode64(OpenSSL::Digest::SHA256.digest(raw))[0...-1]
+          Base64.strict_encode64(OpenSSL::Digest::SHA256.digest(rfc4253))[0...-1]
         end
       end
 
@@ -33,10 +33,10 @@ module SSHData
         raise "implement me"
       end
 
-      # Raw encoding of public key.
+      # RFC4253 binary encoding of public key.
       #
       # Returns a binary String.
-      def raw
+      def rfc4253
         raise "implement me"
       end
 
@@ -46,7 +46,7 @@ module SSHData
       #
       # Returns a String key.
       def openssh(comment: nil)
-        [algo, Base64.strict_encode64(raw), comment].compact.join(" ")
+        [algo, Base64.strict_encode64(rfc4253), comment].compact.join(" ")
       end
 
       # Is this public key equal to another public key?

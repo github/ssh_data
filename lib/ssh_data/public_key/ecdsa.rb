@@ -100,10 +100,10 @@ module SSHData
         openssl.verify(digest.new, openssl_sig, signed_data)
       end
 
-      # Raw encoding of public key.
+      # RFC4253 binary encoding of public key.
       #
       # Returns a binary String.
-      def raw
+      def rfc4253
         Encoding.encode_fields(
           [:string, algo],
           [:string, curve],
