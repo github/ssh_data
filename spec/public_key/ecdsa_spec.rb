@@ -1,7 +1,7 @@
 require_relative "../spec_helper"
 
 describe SSHData::PublicKey::ECDSA do
-  let(:openssh_key) { SSHData::PublicKey.parse(fixture("ecdsa_leaf_for_rsa_ca.pub")) }
+  let(:openssh_key) { SSHData::PublicKey.parse_openssh(fixture("ecdsa_leaf_for_rsa_ca.pub")) }
 
   it "can parse openssh-generate keys" do
     expect { openssh_key }.not_to raise_error
@@ -13,7 +13,7 @@ describe SSHData::PublicKey::ECDSA do
 
   it "can verify certificate signatures" do
     expect {
-      SSHData::Certificate.parse(fixture("rsa_leaf_for_ecdsa_ca-cert.pub"),
+      SSHData::Certificate.parse_openssh(fixture("rsa_leaf_for_ecdsa_ca-cert.pub"),
         unsafe_no_verify: false
       )
     }.not_to raise_error
@@ -29,7 +29,7 @@ describe SSHData::PublicKey::ECDSA do
     ].join)].join(" ")
 
     expect {
-      SSHData::PublicKey.parse(malformed)
+      SSHData::PublicKey.parse_openssh(malformed)
     }.to raise_error(SSHData::DecodeError)
   end
 
@@ -107,7 +107,7 @@ describe SSHData::PublicKey::ECDSA do
         ].join)].join(" ")
 
         expect {
-          SSHData::PublicKey.parse(malformed)
+          SSHData::PublicKey.parse_openssh(malformed)
         }.to raise_error(SSHData::DecodeError)
       end
     end

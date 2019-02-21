@@ -40,6 +40,15 @@ module SSHData
         raise "implement me"
       end
 
+      # OpenSSH public key in authorized_keys format (see sshd(8) manual page).
+      #
+      # comment - Optional String comment to append.
+      #
+      # Returns a String key.
+      def openssh(comment: nil)
+        [algo, Base64.strict_encode64(raw), comment].compact.join(" ")
+      end
+
       # Is this public key equal to another public key?
       #
       # other - Another SSHData::PublicKey::Base instance to compare with.

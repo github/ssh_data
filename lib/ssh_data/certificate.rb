@@ -12,21 +12,27 @@ module SSHData
     ALGO_ECDSA521 = "ecdsa-sha2-nistp521-cert-v01@openssh.com"
     ALGO_ED25519  = "ssh-ed25519-cert-v01@openssh.com"
 
+    ALGOS = [
+      ALGO_RSA, ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
+      ALGO_ED25519
+    ]
+
     attr_reader :algo, :nonce, :public_key, :serial, :type, :key_id,
                 :valid_principals, :valid_after, :valid_before,
                 :critical_options, :extensions, :reserved, :ca_key, :signature
 
-    # Parse an SSH certificate.
+    # Parse an OpenSSH certificate in authorized_keys format (see sshd(8) manual
+    # page).
     #
-    # cert              - An SSH formatted certificate, including key algo,
-    #                     encoded key and optional user/host names.
+    # cert              - An OpenSSH formatted certificate, including key algo,
+    #                     base64 encoded key and optional comment.
     # unsafe_no_verify: - Bool of whether to skip verifying certificate signature
     #                     (Default false)
     #
     # Returns a Certificate instance.
-    def self.parse(cert, unsafe_no_verify: false)
+    def self.parse_openssh(cert, unsafe_no_verify: false)
       algo, raw, _ = SSHData.key_parts(cert)
-      parsed = parse_raw(raw, unsafe_no_verify: unsafe_no_verify)
+      parsed = parse_rfc4253(raw, unsafe_no_verify: unsafe_no_verify)
 
       if parsed.algo != algo
         raise DecodeError, "algo mismatch: #{parsed.algo.inspect}!=#{algo.inspect}"
@@ -35,14 +41,17 @@ module SSHData
       parsed
     end
 
-    # Parse an SSH certificate.
+    # Deprecated
+    singleton_class.send(:alias_method, :parse, :parse_openssh)
+
+    # Parse an RFC 4253 binary SSH certificate.
     #
-    # cert              - A raw binary certificate String.
+    # cert              - A RFC 4253 binary certificate String.
     # unsafe_no_verify: - Bool of whether to skip verifying certificate
     #                     signature (Default false)
     #
     # Returns a Certificate instance.
-    def self.parse_raw(raw, unsafe_no_verify: false)
+    def self.parse_rfc4253(raw, unsafe_no_verify: false)
       data, read = Encoding.decode_certificate(raw)
 
       if read != raw.bytesize

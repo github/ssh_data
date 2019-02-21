@@ -8,15 +8,21 @@ module SSHData
     ALGO_ECDSA521 = "ecdsa-sha2-nistp521"
     ALGO_ED25519  = "ssh-ed25519"
 
-    # Parse an SSH public key.
+    ALGOS = [
+      ALGO_RSA, ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
+      ALGO_ED25519
+    ]
+
+    # Parse an OpenSSH public key in authorized_keys format (see sshd(8) manual
+    # page).
     #
-    # key - An SSH formatted public key, including algo, encoded key and optional
-    #       user/host names.
+    # key - An OpenSSH formatted public key, including algo, base64 encoded key
+    #       and optional comment.
     #
     # Returns a PublicKey::Base subclass instance.
-    def self.parse(key)
+    def self.parse_openssh(key)
       algo, raw, _ = SSHData.key_parts(key)
-      parsed = parse_raw(raw)
+      parsed = parse_rfc4253(raw)
 
       if parsed.algo != algo
         raise DecodeError, "algo mismatch: #{parsed.algo.inspect}!=#{algo.inspect}"
@@ -25,12 +31,15 @@ module SSHData
       parsed
     end
 
-    # Parse an SSH public key.
+    # Deprecated
+    singleton_class.send(:alias_method, :parse, :parse_openssh)
+
+    # Parse an RFC 4253 binary SSH public key.
     #
-    # key - A raw binary public key String.
+    # key - A RFC 4253 binary public key String.
     #
     # Returns a PublicKey::Base subclass instance.
-    def self.parse_raw(raw)
+    def self.parse_rfc4253(raw)
       data, read = Encoding.decode_public_key(raw)
 
       if read != raw.bytesize
