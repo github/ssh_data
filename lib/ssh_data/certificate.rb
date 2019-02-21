@@ -119,5 +119,49 @@ module SSHData
       @ca_key = ca_key
       @signature = signature
     end
+
+    # OpenSSH certificate in authorized_keys format (see sshd(8) manual page).
+    #
+    # comment - Optional String comment to append.
+    #
+    # Returns a String key.
+    def openssh(comment: nil)
+      [algo, Base64.strict_encode64(rfc4253), comment].compact.join(" ")
+    end
+
+    # RFC4253 binary encoding of the certificate.
+    #
+    # Returns a binary String.
+    def rfc4253
+      Encoding.encode_fields(
+        [:string,  algo],
+        [:string,  nonce],
+        [:raw,     public_key_without_algo],
+        [:uint64,  serial],
+        [:uint32,  type],
+        [:string,  key_id],
+        [:list,    valid_principals],
+        [:time,    valid_after],
+        [:time,    valid_before],
+        [:options, critical_options],
+        [:options, extensions],
+        [:string,  reserved],
+        [:string,  ca_key.rfc4253],
+        [:string,  signature],
+      )
+    end
+
+    private
+
+    # Helper for getting the RFC4253 encoded public key with the first field
+    # (the algorithm) stripped off.
+    #
+    # Returns a String.
+    def public_key_without_algo
+      key = public_key.rfc4253
+      _, algo_len = Encoding.decode_string(key)
+      key.byteslice(algo_len..-1)
+    end
+
   end
 end

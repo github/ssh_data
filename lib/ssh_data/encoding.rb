@@ -377,6 +377,8 @@ module SSHData
     def encode_fields(*fields)
       fields.map do |type, value|
         case type
+        when :raw
+          value
         when :string
           encode_string(value)
         when :list
@@ -392,7 +394,7 @@ module SSHData
         when :options
           encode_options(value)
         else
-          raise DecodeError
+          raise DecodeError, "bad type: #{type}"
         end
       end.join
     end

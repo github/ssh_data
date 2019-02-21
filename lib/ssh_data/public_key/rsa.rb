@@ -32,7 +32,7 @@ module SSHData
         openssl.verify(OpenSSL::Digest::SHA1.new, raw_sig, signed_data)
       end
 
-      # RFC4253 binary encoding of public key.
+      # RFC4253 binary encoding of the public key.
       #
       # Returns a binary String.
       def rfc4253
