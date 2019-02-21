@@ -1,9 +1,6 @@
 require_relative "./spec_helper"
 
 describe SSHData::Certificate do
-  let(:min_time) { Time.at(0) }
-  let(:max_time) { Time.at((2**64)-1) }
-
   it "supports the deprecated Certificate.parse method" do
     expect {
       described_class.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub"))
@@ -136,8 +133,8 @@ describe SSHData::Certificate do
         expect(subject.type).to eq(SSHData::Certificate::TYPE_USER)
         expect(subject.key_id).to eq("my-ident")
         expect(subject.valid_principals).to eq(["p1", "p2"])
-        expect(subject.valid_after).to eq(min_time)
-        expect(subject.valid_before).to eq(max_time)
+        expect(subject.valid_after).to eq(SSHData::Certificate::FOREVER)
+        expect(subject.valid_before).to eq(SSHData::Certificate::ALWAYS)
         expect(subject.critical_options).to eq({"foo" => "bar"})
         expect(subject.extensions).to eq({"permit-X11-forwarding" => true, "baz" => "qwer"})
         expect(subject.reserved).to eq("")

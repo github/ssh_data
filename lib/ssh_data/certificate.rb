@@ -1,5 +1,9 @@
 module SSHData
   class Certificate
+    # Special values for valid_before and valid_after.
+    FOREVER = Time.at(0)
+    ALWAYS = Time.at((2**64)-1)
+
     # Integer certificate types
     TYPE_USER = 1
     TYPE_HOST = 2
@@ -62,21 +66,9 @@ module SSHData
       public_key = PublicKey.from_data(data.delete(:public_key))
       ca_key     = PublicKey.from_data(data.delete(:signature_key))
 
-      unless unsafe_no_verify
-        # The signature is the last field. The signature is calculated over all
-        # preceding data.
-        signed_data_len = raw.bytesize - data[:signature].bytesize - 4
-        signed_data = raw.byteslice(0, signed_data_len)
-
-        unless ca_key.verify(signed_data, data[:signature])
-          raise VerifyError
-        end
+      new(**data.merge(public_key: public_key, ca_key: ca_key)).tap do |cert|
+        raise VerifyError unless unsafe_no_verify || cert.verify
       end
-
-      new(**data.merge(
-        public_key:       public_key,
-        ca_key:           ca_key,
-      ))
     end
 
     # Intialize a new Certificate instance.
@@ -103,9 +95,9 @@ module SSHData
     # signature:        - The certificate's String signature field.
     #
     # Returns nothing.
-    def initialize(algo:, nonce:, public_key:, serial:, type:, key_id:, valid_principals:, valid_after:, valid_before:, critical_options:, extensions:, reserved:, ca_key:, signature:)
-      @algo = algo
-      @nonce = nonce
+    def initialize(public_key:, key_id:, algo: nil, nonce: nil, serial: 0, type: TYPE_USER, valid_principals: [], valid_after: FOREVER, valid_before: ALWAYS, critical_options: {}, extensions: {}, reserved: "", ca_key: nil, signature: "")
+      @algo = algo || Encoding::CERT_ALGO_BY_PUBLIC_KEY_ALGO[public_key.algo]
+      @nonce = nonce || SecureRandom.random_bytes(32)
       @public_key = public_key
       @serial = serial
       @type = type
@@ -151,7 +143,22 @@ module SSHData
       )
     end
 
+    # Verify the certificate's signature.
+    #
+    # Returns boolean.
+    def verify
+      ca_key.verify(signed_data, signature)
+    end
+
     private
+
+    # The portion of the certificate over which the signature is calculated.
+    #
+    # Returns a binary String.
+    def signed_data
+      siglen = self.signature.bytesize + 4
+      rfc4253.byteslice(0...-siglen)
+    end
 
     # Helper for getting the RFC4253 encoded public key with the first field
     # (the algorithm) stripped off.
