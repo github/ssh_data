@@ -379,12 +379,18 @@ module SSHData
         case type
         when :string
           encode_string(value)
+        when :list
+          encode_list(value)
         when :mpint
           encode_mpint(value)
+        when :time
+          encode_time(value)
         when :uint64
           encode_uint64(value)
         when :uint32
           encode_uint32(value)
+        when :options
+          encode_options(value)
         else
           raise DecodeError
         end
@@ -451,6 +457,76 @@ module SSHData
       [list, str_read]
     end
 
+    # Encode a list of strings.
+    #
+    # value - The Array of Strings to encode.
+    #
+    # Returns an encoded representation of the list.
+    def encode_list(value)
+      encode_string(value.map { |s| encode_string(s) }.join)
+    end
+
+        # Read a multi-precision integer from the provided raw data.
+    #
+    # raw    - A binary String.
+    # offset - The offset into raw at which to read (default 0).
+    #
+    # Returns an Array including the decoded mpint as an OpenSSL::BN and the
+    # Integer number of bytes read.
+    def decode_mpint(raw, offset=0)
+      if raw.bytesize < offset + 4
+        raise DecodeError, "data too short"
+      end
+
+      str_size_s = raw.byteslice(offset, 4)
+      str_size = str_size_s.unpack("L>").first
+      mpi_size = str_size + 4
+
+      if raw.bytesize < offset + mpi_size
+        raise DecodeError, "data too short"
+      end
+
+      mpi_s = raw.slice(offset, mpi_size)
+
+      # This calls OpenSSL's BN_mpi2bn() function. As far as I can tell, this
+      # matches up with with MPI type defined in RFC4251 Section 5 with the
+      # exception that OpenSSL doesn't enforce minimal length. We could enforce
+      # this ourselves, but it doesn't seem worth the added complexity.
+      mpi = OpenSSL::BN.new(mpi_s, 0)
+
+      [mpi, mpi_size]
+    end
+
+    # Encode a BN as an mpint.
+    #
+    # value - The OpenSSL::BN value to encode.
+    #
+    # Returns an encoded representation of the BN.
+    def encode_mpint(value)
+      value.to_s(0)
+    end
+
+    # Read a time from the provided raw data.
+    #
+    # raw    - A binary String.
+    # offset - The offset into raw at which to read (default 0).
+    #
+    # Returns an Array including the decoded Time and the Integer number of
+    # bytes read.
+    def decode_time(raw, offset=0)
+      time_raw, read = decode_uint64(raw, offset)
+      [Time.at(time_raw), read]
+    end
+
+    # Encode a time.
+    #
+    # value - The Time value to encode.
+    #
+    # Returns an encoded representation of the Time.
+    def encode_time(value)
+      encode_uint64(value.to_i)
+    end
+
     # Read the specified number of strings out of the provided raw data.
     #
     # raw    - A binary String.
@@ -508,56 +584,18 @@ module SSHData
       [opts, str_read]
     end
 
-    # Read a multi-precision integer from the provided raw data.
+    # Encode series of key/value pairs.
     #
-    # raw    - A binary String.
-    # offset - The offset into raw at which to read (default 0).
+    # value - The Hash value to encode.
     #
-    # Returns an Array including the decoded mpint as an OpenSSL::BN and the
-    # Integer number of bytes read.
-    def decode_mpint(raw, offset=0)
-      if raw.bytesize < offset + 4
-        raise DecodeError, "data too short"
+    # Returns an encoded representation of the Hash.
+    def encode_options(value)
+      opts_raw = value.reduce("") do |encoded, (key, value)|
+        value_str = value == true ? "" : encode_string(value)
+        encoded + encode_string(key) + encode_string(value_str)
       end
 
-      str_size_s = raw.byteslice(offset, 4)
-      str_size = str_size_s.unpack("L>").first
-      mpi_size = str_size + 4
-
-      if raw.bytesize < offset + mpi_size
-        raise DecodeError, "data too short"
-      end
-
-      mpi_s = raw.slice(offset, mpi_size)
-
-      # This calls OpenSSL's BN_mpi2bn() function. As far as I can tell, this
-      # matches up with with MPI type defined in RFC4251 Section 5 with the
-      # exception that OpenSSL doesn't enforce minimal length. We could enforce
-      # this ourselves, but it doesn't seem worth the added complexity.
-      mpi = OpenSSL::BN.new(mpi_s, 0)
-
-      [mpi, mpi_size]
-    end
-
-    # Encoding a BN as an mpint.
-    #
-    # value - The OpenSSL::BN value to encode.
-    #
-    # Returns an encoded representation of the BN.
-    def encode_mpint(value)
-      value.to_s(0)
-    end
-
-    # Read a time from the provided raw data.
-    #
-    # raw    - A binary String.
-    # offset - The offset into raw at which to read (default 0).
-    #
-    # Returns an Array including the decoded Time and the Integer number of
-    # bytes read.
-    def decode_time(raw, offset=0)
-      time_raw, read = decode_uint64(raw, offset)
-      [Time.at(time_raw), read]
+      encode_string(opts_raw)
     end
 
     # Read a uint64 from the provided raw data.

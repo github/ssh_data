@@ -2,6 +2,8 @@ require "securerandom"
 require_relative "./spec_helper"
 
 describe SSHData::Encoding do
+  let(:junk) { String.new("\xff\xff", encoding: Encoding::ASCII_8BIT) }
+
   describe "#pem_type" do
     let(:type) { "FOO BAR" }
     let(:head) { "-----BEGIN #{type}-----" }
@@ -566,42 +568,228 @@ describe SSHData::Encoding do
     end
   end
 
-  describe("#decode_options") do
-    it "can decode options" do
-      opts = {"k1" => "v1", "k2" => "v2"}
-      raw_opts = opts.reduce("") do |cum, (k, v)|
-        cum + [
-          described_class.encode_string(k),
-          described_class.encode_string(described_class.encode_string(v))
-        ].join
+  describe("strings") do
+    test_cases = []
+
+    test_cases << [
+      :normal,                  # name
+      "foobar",                 # raw
+      "\x00\x00\x00\x06foobar", # encoded
+    ]
+
+    test_cases << [
+      :empty,             # name
+      "",                 # raw
+      "\x00\x00\x00\x00", # encoded
+    ]
+
+    test_cases.each do |name, raw, encoded|
+      describe("#{name} values") do
+        it "can decode" do
+          raw2, read = described_class.decode_string(encoded + junk)
+          expect(raw2).to eq(raw)
+          expect(read).to eq(encoded.bytesize)
+        end
+
+        it "can at an offset" do
+          raw2, read = described_class.decode_string(junk + encoded + junk, junk.bytesize)
+          expect(raw2).to eq(raw)
+          expect(read).to eq(encoded.bytesize)
+        end
+
+        it "can encode" do
+          encoded2 = described_class.encode_string(raw)
+          expect(encoded2).to eq(encoded)
+        end
       end
-
-      encoded = described_class.encode_string(raw_opts)
-      decoded, read = described_class.decode_options(encoded)
-      expect(decoded).to eq(opts)
-      expect(read).to eq(encoded.bytesize)
-
-      encoded = described_class.encode_string("")
-      decoded, read = described_class.decode_options(encoded)
-      expect(decoded).to eq({})
-      expect(read).to eq(encoded.bytesize)
     end
   end
 
-  describe("#decode_list") do
-    it "can decode a series of strings" do
-      strs = %w(one two three)
-      list_raw = strs.map { |s| described_class.encode_string(s) }.join
+  describe("lists") do
+    test_cases = []
 
-      encoded = described_class.encode_string(list_raw)
-      decoded, read = described_class.decode_list(encoded)
-      expect(decoded).to eq(strs)
-      expect(read).to eq(encoded.bytesize)
+    test_cases << [
+      :normal,                                                                       # name
+      %w(one two three),                                                             # raw
+      "\x00\x00\x00\x17\x00\x00\x00\x03one\x00\x00\x00\x03two\x00\x00\x00\x05three", # encoded
+    ]
 
-      encoded = described_class.encode_string("")
-      decoded, read = described_class.decode_list(encoded)
-      expect(decoded).to eq([])
+    test_cases << [
+      :empty,             # name
+      %w(),               # raw
+      "\x00\x00\x00\x00", # encoded
+    ]
+
+    test_cases.each do |name, raw, encoded|
+      describe("#{name} values") do
+        it "can decode" do
+          raw2, read = described_class.decode_list(encoded + junk)
+          expect(raw2).to eq(raw)
+          expect(read).to eq(encoded.bytesize)
+        end
+
+        it "can decode at an offset" do
+          raw2, read = described_class.decode_list(junk + encoded + junk, junk.bytesize)
+          expect(raw2).to eq(raw)
+          expect(read).to eq(encoded.bytesize)
+        end
+
+        it "can encode" do
+          encoded2 = described_class.encode_list(raw)
+          expect(encoded2).to eq(encoded)
+        end
+      end
+    end
+  end
+
+  describe("mpint") do
+    test_cases = []
+
+    test_cases << [
+      :positive,                                                                     # name
+      OpenSSL::BN.new(0x01020304),                                                   # raw
+      String.new("\x00\x00\x00\x04\x01\x02\x03\x04", encoding: Encoding::ASCII_8BIT) # encoded
+    ]
+
+    test_cases << [
+      :zero,                                                         # name
+      OpenSSL::BN.new(0x00),                                         # raw
+      String.new("\x00\x00\x00\x00", encoding: Encoding::ASCII_8BIT) # encoded
+    ]
+
+    test_cases.each do |name, raw, encoded|
+      describe("#{name} values") do
+        it "can decode" do
+          raw2, read = described_class.decode_mpint(encoded + junk)
+          expect(raw2.to_i).to eq(raw.to_i)
+          expect(read).to eq(encoded.bytesize)
+        end
+
+        it "can decode at an offset" do
+          raw2, read = described_class.decode_mpint(junk + encoded + junk, junk.bytesize)
+          expect(raw2).to eq(raw)
+          expect(read).to eq(encoded.bytesize)
+        end
+
+        it "can encode" do
+          encoded2 = described_class.encode_mpint(raw)
+          expect(encoded2).to eq(encoded)
+        end
+      end
+    end
+  end
+
+  describe("time") do
+    let(:raw)     { Time.at((rand * 1000000000).to_i) }
+    let(:encoded) { [raw.to_i].pack("Q>") }
+    let(:junk)    { String.new("\xff\xff", encoding: Encoding::ASCII_8BIT) }
+
+    it "can decode" do
+      raw2, read = described_class.decode_time(encoded + junk)
+      expect(raw2).to eq(raw)
       expect(read).to eq(encoded.bytesize)
+    end
+
+    it "can decode at an offset" do
+      raw2, read = described_class.decode_time(junk + encoded + junk, junk.bytesize)
+      expect(raw2).to eq(raw)
+      expect(read).to eq(encoded.bytesize)
+    end
+
+    it "can encode" do
+      encoded2 = described_class.encode_time(raw)
+      expect(encoded2).to eq(encoded)
+    end
+  end
+
+  describe("uint64") do
+    let(:raw)     { 0x1234567890abcdef }
+    let(:encoded) { String.new("\x12\x34\x56\x78\x90\xab\xcd\xef", encoding: Encoding::ASCII_8BIT) }
+    let(:junk)    { String.new("\xff\xff", encoding: Encoding::ASCII_8BIT) }
+
+    it "can decode" do
+      raw2, read = described_class.decode_uint64(encoded + junk)
+      expect(raw2).to eq(raw)
+      expect(read).to eq(encoded.bytesize)
+    end
+
+    it "can decode at an offset" do
+      raw2, read = described_class.decode_uint64(junk + encoded + junk, junk.bytesize)
+      expect(raw2).to eq(raw)
+      expect(read).to eq(encoded.bytesize)
+    end
+
+    it "can encode" do
+      encoded2 = described_class.encode_uint64(raw)
+      expect(encoded2).to eq(encoded)
+    end
+  end
+
+  describe("uint32") do
+    let(:raw)     { 0x12345678 }
+    let(:encoded) { String.new("\x12\x34\x56\x78", encoding: Encoding::ASCII_8BIT) }
+    let(:junk)    { String.new("\xff\xff", encoding: Encoding::ASCII_8BIT) }
+
+    it "can decode" do
+      raw2, read = described_class.decode_uint32(encoded + junk)
+      expect(raw2).to eq(raw)
+      expect(read).to eq(encoded.bytesize)
+    end
+
+    it "can decode at an offset" do
+      raw2, read = described_class.decode_uint32(junk + encoded + junk, junk.bytesize)
+      expect(raw2).to eq(raw)
+      expect(read).to eq(encoded.bytesize)
+    end
+
+    it "can encode" do
+      encoded2 = described_class.encode_uint32(raw)
+      expect(encoded2).to eq(encoded)
+    end
+  end
+
+  describe("options") do
+    test_cases = []
+
+    test_cases << [
+      :normal,                                    # name
+      {"k1" => "v1", "k2" => true, "k3" => "v3"}, # raw
+      [                                           # encoded
+        "\x00\x00\x00\x2a",
+        "\x00\x00\x00\x02", "k1",
+        "\x00\x00\x00\x06", "\x00\x00\x00\x02", "v1",
+        "\x00\x00\x00\x02", "k2",
+        "\x00\x00\x00\x00",
+        "\x00\x00\x00\x02", "k3",
+        "\x00\x00\x00\x06", "\x00\x00\x00\x02", "v3",
+      ].join
+    ]
+
+    test_cases << [
+      :empty,            # name
+      {},                # raw
+      "\x00\x00\x00\x00" # encoded
+    ]
+
+    test_cases.each do |name, raw, encoded|
+      describe("#{name} values") do
+        it "can decode" do
+          raw2, read = described_class.decode_options(encoded + junk)
+          expect(raw2).to eq(raw)
+          expect(read).to eq(encoded.bytesize)
+        end
+
+        it "can at an offset" do
+          raw2, read = described_class.decode_options(junk + encoded + junk, junk.bytesize)
+          expect(raw2).to eq(raw)
+          expect(read).to eq(encoded.bytesize)
+        end
+
+        it "can encode" do
+          encoded2 = described_class.encode_options(raw)
+          expect(encoded2).to eq(encoded)
+        end
+      end
     end
   end
 
@@ -616,33 +804,6 @@ describe SSHData::Encoding do
       decoded, read = described_class.decode_n_strings("", 0, 0)
       expect(decoded).to eq([])
       expect(read).to eq(0)
-    end
-  end
-
-  describe("#decode_string") do
-    it "can round trip" do
-      s1 = "foobar"
-      s2, read = described_class.decode_string(described_class.encode_string(s1))
-      expect(s2).to eq(s1)
-      expect(read).to eq(s1.length + 4)
-    end
-  end
-
-  describe("#decode_mpint") do
-    it "can round trip" do
-      i1 = OpenSSL::BN.new(SecureRandom.bytes((rand * 100).to_i), 2)
-      i2, read = described_class.decode_mpint(described_class.encode_mpint(i1))
-      expect(i2).to eq(i1)
-    end
-  end
-
-  describe("#decode_time") do
-    it "can round trip" do
-      t1 = Time.at((rand * 1000000000).to_i)
-      t2, read = described_class.decode_time([t1.to_i].pack("Q>"))
-
-      expect(t2).to eq(t1)
-      expect(read).to eq(8)
     end
   end
 end
