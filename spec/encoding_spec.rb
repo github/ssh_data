@@ -280,7 +280,7 @@ describe SSHData::Encoding do
       raw = fixture("rsa_leaf_for_rsa_ca.pub", binary: true)
       with_prefix = [prefix, raw].join
 
-      data, _ = described_class.decode_public_key(with_prefix, nil, prefix.bytesize).first
+      data, _ = described_class.decode_public_key(with_prefix, prefix.bytesize, nil).first
 
       expect(data).to eq(rsa_data)
     end
@@ -288,7 +288,7 @@ describe SSHData::Encoding do
     it "can skip the algo when decoding a public key" do
       raw = fixture("rsa_leaf_for_rsa_ca.pub", binary: true)
       algo, offset = described_class.decode_string(raw)
-      data, _ = described_class.decode_public_key(raw, algo, offset)
+      data, _ = described_class.decode_public_key(raw, offset, algo)
 
       expect(data).to eq(rsa_data)
     end
@@ -316,6 +316,17 @@ describe SSHData::Encoding do
     it "can decode an ED25519 public key" do
       expect(ed25519_data[:algo]).to eq(SSHData::PublicKey::ALGO_ED25519)
       expect(ed25519_data[:pk]).to be_a(String)
+    end
+  end
+
+  describe("#decode_string_public_key") do
+    let(:string_public_key) { described_class.encode_string(fixture("rsa_leaf_for_rsa_ca.pub", binary: true)) }
+    let(:public_key)        { described_class.decode_public_key(fixture("rsa_leaf_for_rsa_ca.pub", binary: true)).first }
+
+    subject { described_class.decode_string_public_key(string_public_key).first }
+
+    it "matches normal decoding" do
+      expect(subject).to eq(public_key)
     end
   end
 
@@ -357,22 +368,21 @@ describe SSHData::Encoding do
       expect(rsa_data[:nonce]).to be_a(String)
       expect(rsa_data[:nonce].length).to eq(32)
 
-      expect(rsa_data[:key_data][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
-      expect(rsa_data[:key_data][:e]).to be_a(OpenSSL::BN)
-      expect(rsa_data[:key_data][:n]).to be_a(OpenSSL::BN)
+      expect(rsa_data[:public_key][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
+      expect(rsa_data[:public_key][:e]).to be_a(OpenSSL::BN)
+      expect(rsa_data[:public_key][:n]).to be_a(OpenSSL::BN)
 
       expect(rsa_data[:serial]).to eq(123)
       expect(rsa_data[:type]).to eq(SSHData::Certificate::TYPE_USER)
       expect(rsa_data[:key_id]).to eq("my-ident")
-      expect(rsa_data[:valid_principals]).to eq("\x00\x00\x00\x02p1\x00\x00\x00\x02p2")
-      expect(rsa_data[:valid_after]).to eq(0)
-      expect(rsa_data[:valid_before]).to eq((2**64)-1)
-      expect(rsa_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-      expect(rsa_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
+      expect(rsa_data[:valid_principals]).to eq(["p1", "p2"])
+      expect(rsa_data[:valid_after]).to eq(Time.at(0))
+      expect(rsa_data[:valid_before]).to eq(Time.at((2**64)-1))
+      expect(rsa_data[:critical_options]).to eq({"foo"=>"bar"})
+      expect(rsa_data[:extensions]).to eq({"permit-X11-forwarding"=>true, "baz"=>"qwer"})
       expect(rsa_data[:reserved]).to eq("")
 
-      expect(rsa_data[:signature_key]).to be_a(String)
-      expect(rsa_data[:signature_key].bytesize).to eq(279)
+      expect(rsa_data[:signature_key]).to be_a(Hash)
 
       expect(rsa_data[:signature]).to be_a(String)
       expect(rsa_data[:signature].bytesize).to eq(271)
@@ -384,24 +394,23 @@ describe SSHData::Encoding do
       expect(dsa_data[:nonce]).to be_a(String)
       expect(dsa_data[:nonce].length).to eq(32)
 
-      expect(dsa_data[:key_data][:algo]).to eq(SSHData::PublicKey::ALGO_DSA)
-      expect(dsa_data[:key_data][:p]).to be_a(OpenSSL::BN)
-      expect(dsa_data[:key_data][:q]).to be_a(OpenSSL::BN)
-      expect(dsa_data[:key_data][:g]).to be_a(OpenSSL::BN)
-      expect(dsa_data[:key_data][:y]).to be_a(OpenSSL::BN)
+      expect(dsa_data[:public_key][:algo]).to eq(SSHData::PublicKey::ALGO_DSA)
+      expect(dsa_data[:public_key][:p]).to be_a(OpenSSL::BN)
+      expect(dsa_data[:public_key][:q]).to be_a(OpenSSL::BN)
+      expect(dsa_data[:public_key][:g]).to be_a(OpenSSL::BN)
+      expect(dsa_data[:public_key][:y]).to be_a(OpenSSL::BN)
 
       expect(dsa_data[:serial]).to eq(123)
       expect(dsa_data[:type]).to eq(SSHData::Certificate::TYPE_USER)
       expect(dsa_data[:key_id]).to eq("my-ident")
-      expect(dsa_data[:valid_principals]).to eq("\x00\x00\x00\x02p1\x00\x00\x00\x02p2")
-      expect(dsa_data[:valid_after]).to eq(0)
-      expect(dsa_data[:valid_before]).to eq((2**64)-1)
-      expect(dsa_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-      expect(dsa_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
+      expect(dsa_data[:valid_principals]).to eq(["p1", "p2"])
+      expect(dsa_data[:valid_after]).to eq(Time.at(0))
+      expect(dsa_data[:valid_before]).to eq(Time.at((2**64)-1))
+      expect(dsa_data[:critical_options]).to eq({"foo"=>"bar"})
+      expect(dsa_data[:extensions]).to eq({"permit-X11-forwarding"=>true, "baz"=>"qwer"})
       expect(dsa_data[:reserved]).to eq("")
 
-      expect(dsa_data[:signature_key]).to be_a(String)
-      expect(dsa_data[:signature_key].bytesize).to eq(279)
+      expect(dsa_data[:signature_key]).to be_a(Hash)
 
       expect(dsa_data[:signature]).to be_a(String)
       expect(dsa_data[:signature].bytesize).to eq(271)
@@ -413,22 +422,21 @@ describe SSHData::Encoding do
       expect(ecdsa_data[:nonce]).to be_a(String)
       expect(ecdsa_data[:nonce].length).to eq(32)
 
-      expect(ecdsa_data[:key_data][:algo]).to eq(SSHData::PublicKey::ALGO_ECDSA256)
-      expect(ecdsa_data[:key_data][:curve]).to eq("nistp256")
-      expect(ecdsa_data[:key_data][:public_key]).to be_a(String)
+      expect(ecdsa_data[:public_key][:algo]).to eq(SSHData::PublicKey::ALGO_ECDSA256)
+      expect(ecdsa_data[:public_key][:curve]).to eq("nistp256")
+      expect(ecdsa_data[:public_key][:public_key]).to be_a(String)
 
       expect(ecdsa_data[:serial]).to eq(123)
       expect(ecdsa_data[:type]).to eq(SSHData::Certificate::TYPE_USER)
       expect(ecdsa_data[:key_id]).to eq("my-ident")
-      expect(ecdsa_data[:valid_principals]).to eq("\x00\x00\x00\x02p1\x00\x00\x00\x02p2")
-      expect(ecdsa_data[:valid_after]).to eq(0)
-      expect(ecdsa_data[:valid_before]).to eq((2**64)-1)
-      expect(ecdsa_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-      expect(ecdsa_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
+      expect(ecdsa_data[:valid_principals]).to eq(["p1", "p2"])
+      expect(ecdsa_data[:valid_after]).to eq(Time.at(0))
+      expect(ecdsa_data[:valid_before]).to eq(Time.at((2**64)-1))
+      expect(ecdsa_data[:critical_options]).to eq({"foo"=>"bar"})
+      expect(ecdsa_data[:extensions]).to eq({"permit-X11-forwarding"=>true, "baz"=>"qwer"})
       expect(ecdsa_data[:reserved]).to eq("")
 
-      expect(ecdsa_data[:signature_key]).to be_a(String)
-      expect(ecdsa_data[:signature_key].bytesize).to eq(279)
+      expect(ecdsa_data[:signature_key]).to be_a(Hash)
 
       expect(ecdsa_data[:signature]).to be_a(String)
       expect(ecdsa_data[:signature].bytesize).to eq(271)
@@ -440,21 +448,20 @@ describe SSHData::Encoding do
       expect(ed25519_data[:nonce]).to be_a(String)
       expect(ed25519_data[:nonce].length).to eq(32)
 
-      expect(ed25519_data[:key_data][:algo]).to eq(SSHData::PublicKey::ALGO_ED25519)
-      expect(ed25519_data[:key_data][:pk]).to be_a(String)
+      expect(ed25519_data[:public_key][:algo]).to eq(SSHData::PublicKey::ALGO_ED25519)
+      expect(ed25519_data[:public_key][:pk]).to be_a(String)
 
       expect(ed25519_data[:serial]).to eq(123)
       expect(ed25519_data[:type]).to eq(SSHData::Certificate::TYPE_USER)
       expect(ed25519_data[:key_id]).to eq("my-ident")
-      expect(ed25519_data[:valid_principals]).to eq("\x00\x00\x00\x02p1\x00\x00\x00\x02p2")
-      expect(ed25519_data[:valid_after]).to eq(0)
-      expect(ed25519_data[:valid_before]).to eq((2**64)-1)
-      expect(ed25519_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-      expect(ed25519_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
+      expect(ed25519_data[:valid_principals]).to eq(["p1", "p2"])
+      expect(ed25519_data[:valid_after]).to eq(Time.at(0))
+      expect(ed25519_data[:valid_before]).to eq(Time.at((2**64)-1))
+      expect(ed25519_data[:critical_options]).to eq({"foo"=>"bar"})
+      expect(ed25519_data[:extensions]).to eq({"permit-X11-forwarding"=>true, "baz"=>"qwer"})
       expect(ed25519_data[:reserved]).to eq("")
 
-      expect(ed25519_data[:signature_key]).to be_a(String)
-      expect(ed25519_data[:signature_key].bytesize).to eq(279)
+      expect(ed25519_data[:signature_key]).to be_a(Hash)
 
       expect(ed25519_data[:signature]).to be_a(String)
       expect(ed25519_data[:signature].bytesize).to eq(271)
@@ -466,22 +473,21 @@ describe SSHData::Encoding do
       expect(rsa_ca_data[:nonce]).to be_a(String)
       expect(rsa_ca_data[:nonce].length).to eq(32)
 
-      expect(rsa_ca_data[:key_data][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
-      expect(rsa_ca_data[:key_data][:e]).to be_a(OpenSSL::BN)
-      expect(rsa_ca_data[:key_data][:n]).to be_a(OpenSSL::BN)
+      expect(rsa_ca_data[:public_key][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
+      expect(rsa_ca_data[:public_key][:e]).to be_a(OpenSSL::BN)
+      expect(rsa_ca_data[:public_key][:n]).to be_a(OpenSSL::BN)
 
       expect(rsa_ca_data[:serial]).to eq(123)
       expect(rsa_ca_data[:type]).to eq(SSHData::Certificate::TYPE_USER)
       expect(rsa_ca_data[:key_id]).to eq("my-ident")
-      expect(rsa_ca_data[:valid_principals]).to eq("\x00\x00\x00\x02p1\x00\x00\x00\x02p2")
-      expect(rsa_ca_data[:valid_after]).to eq(0)
-      expect(rsa_ca_data[:valid_before]).to eq((2**64)-1)
-      expect(rsa_ca_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-      expect(rsa_ca_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
+      expect(rsa_ca_data[:valid_principals]).to eq(["p1", "p2"])
+      expect(rsa_ca_data[:valid_after]).to eq(Time.at(0))
+      expect(rsa_ca_data[:valid_before]).to eq(Time.at((2**64)-1))
+      expect(rsa_ca_data[:critical_options]).to eq({"foo"=>"bar"})
+      expect(rsa_ca_data[:extensions]).to eq({"permit-X11-forwarding"=>true, "baz"=>"qwer"})
       expect(rsa_ca_data[:reserved]).to eq("")
 
-      expect(rsa_ca_data[:signature_key]).to be_a(String)
-      expect(rsa_ca_data[:signature_key].bytesize).to eq(279)
+      expect(rsa_ca_data[:signature_key]).to be_a(Hash)
 
       expect(rsa_ca_data[:signature]).to be_a(String)
       expect(rsa_ca_data[:signature].bytesize).to eq(271)
@@ -493,21 +499,21 @@ describe SSHData::Encoding do
       expect(dsa_ca_data[:nonce]).to be_a(String)
       expect(dsa_ca_data[:nonce].length).to eq(32)
 
-      expect(dsa_ca_data[:key_data][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
-      expect(dsa_ca_data[:key_data][:e]).to be_a(OpenSSL::BN)
-      expect(dsa_ca_data[:key_data][:n]).to be_a(OpenSSL::BN)
+      expect(dsa_ca_data[:public_key][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
+      expect(dsa_ca_data[:public_key][:e]).to be_a(OpenSSL::BN)
+      expect(dsa_ca_data[:public_key][:n]).to be_a(OpenSSL::BN)
 
       expect(dsa_ca_data[:serial]).to eq(123)
       expect(dsa_ca_data[:type]).to eq(SSHData::Certificate::TYPE_USER)
       expect(dsa_ca_data[:key_id]).to eq("my-ident")
-      expect(dsa_ca_data[:valid_principals]).to eq("\x00\x00\x00\x02p1\x00\x00\x00\x02p2")
-      expect(dsa_ca_data[:valid_after]).to eq(0)
-      expect(dsa_ca_data[:valid_before]).to eq((2**64)-1)
-      expect(dsa_ca_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-      expect(dsa_ca_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
+      expect(dsa_ca_data[:valid_principals]).to eq(["p1", "p2"])
+      expect(dsa_ca_data[:valid_after]).to eq(Time.at(0))
+      expect(dsa_ca_data[:valid_before]).to eq(Time.at((2**64)-1))
+      expect(dsa_ca_data[:critical_options]).to eq({"foo"=>"bar"})
+      expect(dsa_ca_data[:extensions]).to eq({"permit-X11-forwarding"=>true, "baz"=>"qwer"})
       expect(dsa_ca_data[:reserved]).to eq("")
 
-      expect(dsa_ca_data[:signature_key]).to be_a(String)
+      expect(dsa_ca_data[:signature_key]).to be_a(Hash)
       expect(dsa_ca_data[:signature]).to be_a(String)
     end
 
@@ -517,21 +523,21 @@ describe SSHData::Encoding do
       expect(ecdsa_ca_data[:nonce]).to be_a(String)
       expect(ecdsa_ca_data[:nonce].length).to eq(32)
 
-      expect(ecdsa_ca_data[:key_data][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
-      expect(ecdsa_ca_data[:key_data][:e]).to be_a(OpenSSL::BN)
-      expect(ecdsa_ca_data[:key_data][:n]).to be_a(OpenSSL::BN)
+      expect(ecdsa_ca_data[:public_key][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
+      expect(ecdsa_ca_data[:public_key][:e]).to be_a(OpenSSL::BN)
+      expect(ecdsa_ca_data[:public_key][:n]).to be_a(OpenSSL::BN)
 
       expect(ecdsa_ca_data[:serial]).to eq(123)
       expect(ecdsa_ca_data[:type]).to eq(SSHData::Certificate::TYPE_USER)
       expect(ecdsa_ca_data[:key_id]).to eq("my-ident")
-      expect(ecdsa_ca_data[:valid_principals]).to eq("\x00\x00\x00\x02p1\x00\x00\x00\x02p2")
-      expect(ecdsa_ca_data[:valid_after]).to eq(0)
-      expect(ecdsa_ca_data[:valid_before]).to eq((2**64)-1)
-      expect(ecdsa_ca_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-      expect(ecdsa_ca_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
+      expect(ecdsa_ca_data[:valid_principals]).to eq(["p1", "p2"])
+      expect(ecdsa_ca_data[:valid_after]).to eq(Time.at(0))
+      expect(ecdsa_ca_data[:valid_before]).to eq(Time.at((2**64)-1))
+      expect(ecdsa_ca_data[:critical_options]).to eq({"foo"=>"bar"})
+      expect(ecdsa_ca_data[:extensions]).to eq({"permit-X11-forwarding"=>true, "baz"=>"qwer"})
       expect(ecdsa_ca_data[:reserved]).to eq("")
 
-      expect(ecdsa_ca_data[:signature_key]).to be_a(String)
+      expect(ecdsa_ca_data[:signature_key]).to be_a(Hash)
       expect(ecdsa_ca_data[:signature]).to be_a(String)
     end
 
@@ -541,21 +547,21 @@ describe SSHData::Encoding do
       expect(ed25519_ca_data[:nonce]).to be_a(String)
       expect(ed25519_ca_data[:nonce].length).to eq(32)
 
-      expect(ed25519_ca_data[:key_data][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
-      expect(ed25519_ca_data[:key_data][:e]).to be_a(OpenSSL::BN)
-      expect(ed25519_ca_data[:key_data][:n]).to be_a(OpenSSL::BN)
+      expect(ed25519_ca_data[:public_key][:algo]).to eq(SSHData::PublicKey::ALGO_RSA)
+      expect(ed25519_ca_data[:public_key][:e]).to be_a(OpenSSL::BN)
+      expect(ed25519_ca_data[:public_key][:n]).to be_a(OpenSSL::BN)
 
       expect(ed25519_ca_data[:serial]).to eq(123)
       expect(ed25519_ca_data[:type]).to eq(SSHData::Certificate::TYPE_USER)
       expect(ed25519_ca_data[:key_id]).to eq("my-ident")
-      expect(ed25519_ca_data[:valid_principals]).to eq("\x00\x00\x00\x02p1\x00\x00\x00\x02p2")
-      expect(ed25519_ca_data[:valid_after]).to eq(0)
-      expect(ed25519_ca_data[:valid_before]).to eq((2**64)-1)
-      expect(ed25519_ca_data[:critical_options]).to eq("\x00\x00\x00\x03foo\x00\x00\x00\x07\x00\x00\x00\x03bar")
-      expect(ed25519_ca_data[:extensions]).to eq("\x00\x00\x00\x15permit-X11-forwarding\x00\x00\x00\x00\x00\x00\x00\x03baz\x00\x00\x00\b\x00\x00\x00\x04qwer")
+      expect(ed25519_ca_data[:valid_principals]).to eq(["p1", "p2"])
+      expect(ed25519_ca_data[:valid_after]).to eq(Time.at(0))
+      expect(ed25519_ca_data[:valid_before]).to eq(Time.at((2**64)-1))
+      expect(ed25519_ca_data[:critical_options]).to eq({"foo"=>"bar"})
+      expect(ed25519_ca_data[:extensions]).to eq({"permit-X11-forwarding"=>true, "baz"=>"qwer"})
       expect(ed25519_ca_data[:reserved]).to eq("")
 
-      expect(ed25519_ca_data[:signature_key]).to be_a(String)
+      expect(ed25519_ca_data[:signature_key]).to be_a(Hash)
       expect(ed25519_ca_data[:signature]).to be_a(String)
     end
   end
@@ -563,34 +569,39 @@ describe SSHData::Encoding do
   describe("#decode_options") do
     it "can decode options" do
       opts = {"k1" => "v1", "k2" => "v2"}
-      encoded = opts.reduce("") do |cum, (k, v)|
+      raw_opts = opts.reduce("") do |cum, (k, v)|
         cum + [
           described_class.encode_string(k),
           described_class.encode_string(described_class.encode_string(v))
         ].join
       end
 
+      encoded = described_class.encode_string(raw_opts)
       decoded, read = described_class.decode_options(encoded)
       expect(decoded).to eq(opts)
       expect(read).to eq(encoded.bytesize)
 
-      decoded, read = described_class.decode_options("")
+      encoded = described_class.encode_string("")
+      decoded, read = described_class.decode_options(encoded)
       expect(decoded).to eq({})
-      expect(read).to eq(0)
+      expect(read).to eq(encoded.bytesize)
     end
   end
 
-  describe("#decode_strings") do
+  describe("#decode_list") do
     it "can decode a series of strings" do
       strs = %w(one two three)
-      encoded = strs.map { |s| described_class.encode_string(s) }.join
-      decoded, read = described_class.decode_strings(encoded)
+      list_raw = strs.map { |s| described_class.encode_string(s) }.join
+
+      encoded = described_class.encode_string(list_raw)
+      decoded, read = described_class.decode_list(encoded)
       expect(decoded).to eq(strs)
       expect(read).to eq(encoded.bytesize)
 
-      decoded, read = described_class.decode_strings("")
+      encoded = described_class.encode_string("")
+      decoded, read = described_class.decode_list(encoded)
       expect(decoded).to eq([])
-      expect(read).to eq(0)
+      expect(read).to eq(encoded.bytesize)
     end
   end
 
@@ -598,11 +609,11 @@ describe SSHData::Encoding do
     it "can decode a series of strings" do
       strs = %w(one two three)
       encoded = strs.map { |s| described_class.encode_string(s) }.join
-      decoded, read = described_class.decode_n_strings(encoded, 2)
+      decoded, read = described_class.decode_n_strings(encoded, 0, 2)
       expect(decoded).to eq(strs[0..1])
       expect(read).to eq(encoded.bytesize - 9)
 
-      decoded, read = described_class.decode_n_strings("", 0)
+      decoded, read = described_class.decode_n_strings("", 0, 0)
       expect(decoded).to eq([])
       expect(read).to eq(0)
     end
@@ -622,6 +633,16 @@ describe SSHData::Encoding do
       i1 = OpenSSL::BN.new(SecureRandom.bytes((rand * 100).to_i), 2)
       i2, read = described_class.decode_mpint(described_class.encode_mpint(i1))
       expect(i2).to eq(i1)
+    end
+  end
+
+  describe("#decode_time") do
+    it "can round trip" do
+      t1 = Time.at((rand * 1000000000).to_i)
+      t2, read = described_class.decode_time([t1.to_i].pack("Q>"))
+
+      expect(t2).to eq(t1)
+      expect(read).to eq(8)
     end
   end
 end

@@ -161,7 +161,7 @@ module SSHData
         raise DecryptError, "cannot decode encrypted private keys"
       end
 
-      data[:public_keys], read = decode_n_strings(raw, data[:nkeys], total_read)
+      data[:public_keys], read = decode_n_strings(raw, total_read, data[:nkeys])
       total_read += read
 
       privs, read = decode_string(raw, total_read)
@@ -244,7 +244,7 @@ module SSHData
     #
     # Returns an Array containing a Hash describing the public key and the
     # Integer number of bytes read.
-    def decode_public_key(raw, algo=nil, offset=0)
+    def decode_public_key(raw, offset=0, algo=nil)
       total_read = 0
 
       if algo.nil?
@@ -264,6 +264,27 @@ module SSHData
       [data, total_read]
     end
 
+    # Decode the fields in a public key encoded as an SSH string.
+    #
+    # raw    - Binary public key as described by RFC4253 section 6.6 wrapped in
+    #          an SSH string..
+    # algo   - String public key algorithm identifier (optional).
+    # offset - Integer number of bytes into `raw` at which we should start
+    #          reading.
+    #
+    # Returns an Array containing a Hash describing the public key and the
+    # Integer number of bytes read.
+    def decode_string_public_key(raw, offset=0, algo=nil)
+      key_raw, str_read = decode_string(raw, offset)
+      key, cert_read = decode_public_key(key_raw, 0, algo)
+
+      if cert_read != key_raw.bytesize
+        raise DecodeError, "unexpected trailing data"
+      end
+
+      [key, str_read]
+    end
+
     # Decode the fields in a certificate.
     #
     # raw    - Binary String certificate as described by RFC4253 section 6.6.
@@ -275,35 +296,33 @@ module SSHData
     def decode_certificate(raw, offset=0)
       total_read = 0
 
-      data, read = decode_fields(raw, [
-        [:algo,  :string],
-        [:nonce, :string],
-      ], offset + total_read)
+      algo, read = decode_string(raw, offset + total_read)
       total_read += read
 
-      unless key_algo = PUBLIC_KEY_ALGO_BY_CERT_ALGO[data[:algo]]
-        raise AlgorithmError, "unknown algorithm: #{key_algo.inspect}"
+      unless key_algo = PUBLIC_KEY_ALGO_BY_CERT_ALGO[algo]
+        raise AlgorithmError, "unknown algorithm: #{algo.inspect}"
       end
 
-      data[:key_data], read = decode_public_key(raw, key_algo, offset + total_read)
-      total_read += read
-
-      trailer, read = decode_fields(raw, [
+      data, read = decode_fields(raw, [
+        [:nonce,            :string],
+        [:public_key,       :public_key, key_algo],
         [:serial,           :uint64],
         [:type,             :uint32],
         [:key_id,           :string],
-        [:valid_principals, :string],
-        [:valid_after,      :uint64],
-        [:valid_before,     :uint64],
-        [:critical_options, :string],
-        [:extensions,       :string],
+        [:valid_principals, :list],
+        [:valid_after,      :time],
+        [:valid_before,     :time],
+        [:critical_options, :options],
+        [:extensions,       :options],
         [:reserved,         :string],
-        [:signature_key,    :string],
+        [:signature_key,    :string_public_key],
         [:signature,        :string],
       ], offset + total_read)
       total_read += read
 
-      [data.merge(trailer), total_read]
+      data[:algo] = algo
+
+      [data, total_read]
     end
 
     # Decode all of the given fields from raw.
@@ -320,21 +339,29 @@ module SSHData
       hash = {}
       total_read = 0
 
-      fields.each do |key, type|
-        value, read = case type
+      fields.each do |key, type, *args|
+        hash[key], read = case type
         when :string
-          decode_string(raw, offset + total_read)
+          decode_string(raw, offset + total_read, *args)
+        when :list
+          decode_list(raw, offset + total_read, *args)
         when :mpint
-          decode_mpint(raw, offset + total_read)
+          decode_mpint(raw, offset + total_read, *args)
+        when :time
+          decode_time(raw, offset + total_read, *args)
         when :uint64
-          decode_uint64(raw, offset + total_read)
+          decode_uint64(raw, offset + total_read, *args)
         when :uint32
-          decode_uint32(raw, offset + total_read)
+          decode_uint32(raw, offset + total_read, *args)
+        when :public_key
+          decode_public_key(raw, offset + total_read, *args)
+        when :string_public_key
+          decode_string_public_key(raw, offset + total_read, *args)
+        when :options
+          decode_options(raw, offset + total_read, *args)
         else
           raise DecodeError
         end
-
-        hash[key] = value
         total_read += read
       end
 
@@ -405,28 +432,34 @@ module SSHData
     #
     # Returns an Array including the Array of decoded Strings and the Integer
     # number of bytes read.
-    def decode_strings(raw, offset=0)
-      total_read = 0
-      strs = []
+    def decode_list(raw, offset=0)
+      list_raw, str_read = decode_string(raw, offset)
 
-      while raw.bytesize > offset + total_read
-        str, read = decode_string(raw, offset + total_read)
-        strs << str
-        total_read += read
+      list_read = 0
+      list = []
+
+      while list_raw.bytesize > list_read
+        value, read = decode_string(list_raw, list_read)
+        list << value
+        list_read += read
       end
 
-      [strs, total_read]
+      if list_read != list_raw.bytesize
+        raise DecodeError, "bad strings list"
+      end
+
+      [list, str_read]
     end
 
     # Read the specified number of strings out of the provided raw data.
     #
     # raw    - A binary String.
-    # n      - The Integer number of Strings to read.
     # offset - The offset into raw at which to read (default 0).
+    # n      - The Integer number of Strings to read.
     #
     # Returns an Array including the Array of decoded Strings and the Integer
     # number of bytes read.
-    def decode_n_strings(raw, n, offset=0)
+    def decode_n_strings(raw, offset=0, n)
       total_read = 0
       strs = []
 
@@ -440,20 +473,23 @@ module SSHData
 
     # Read a series of key/value pairs out of the provided raw data.
     #
-    # raw - A binary String.
+    # raw    - A binary String.
+    # offset - The offset into raw at which to read (default 0).
     #
     # Returns an Array including the Hash of decoded keys/values and the Integer
     # number of bytes read.
-    def decode_options(raw)
-      total_read = 0
+    def decode_options(raw, offset=0)
+      opts_raw, str_read = decode_string(raw, offset)
+
+      opts_read = 0
       opts = {}
 
-      while raw.bytesize > total_read
-        key, read = decode_string(raw, total_read)
-        total_read += read
+      while opts_raw.bytesize > opts_read
+        key, read = decode_string(opts_raw, opts_read)
+        opts_read += read
 
-        value_raw, read = decode_string(raw, total_read)
-        total_read += read
+        value_raw, read = decode_string(opts_raw, opts_read)
+        opts_read += read
 
         if value_raw.bytesize > 0
           opts[key], read = decode_string(value_raw)
@@ -465,7 +501,11 @@ module SSHData
         end
       end
 
-      [opts, total_read]
+      if opts_read != opts_raw.bytesize
+        raise DecodeError, "bad options"
+      end
+
+      [opts, str_read]
     end
 
     # Read a multi-precision integer from the provided raw data.
@@ -506,6 +546,18 @@ module SSHData
     # Returns an encoded representation of the BN.
     def encode_mpint(value)
       value.to_s(0)
+    end
+
+    # Read a time from the provided raw data.
+    #
+    # raw    - A binary String.
+    # offset - The offset into raw at which to read (default 0).
+    #
+    # Returns an Array including the decoded Time and the Integer number of
+    # bytes read.
+    def decode_time(raw, offset=0)
+      time_raw, read = decode_uint64(raw, offset)
+      [Time.at(time_raw), read]
     end
 
     # Read a uint64 from the provided raw data.

@@ -59,20 +59,8 @@ module SSHData
       end
 
       # Parse data into better types, where possible.
-      valid_after         = Time.at(data.delete(:valid_after))
-      valid_before        = Time.at(data.delete(:valid_before))
-      public_key          = PublicKey.from_data(data.delete(:key_data))
-      valid_principals, _ = Encoding.decode_strings(data.delete(:valid_principals))
-      critical_options, _ = Encoding.decode_options(data.delete(:critical_options))
-      extensions, _       = Encoding.decode_options(data.delete(:extensions))
-
-      # The signature key is encoded as a string, but we can parse it.
-      sk_raw = data.delete(:signature_key)
-      sk_data, read = Encoding.decode_public_key(sk_raw)
-      if read != sk_raw.bytesize
-        raise DecodeError, "unexpected trailing data"
-      end
-      ca_key = PublicKey.from_data(sk_data)
+      public_key = PublicKey.from_data(data.delete(:public_key))
+      ca_key     = PublicKey.from_data(data.delete(:signature_key))
 
       unless unsafe_no_verify
         # The signature is the last field. The signature is calculated over all
@@ -86,12 +74,7 @@ module SSHData
       end
 
       new(**data.merge(
-        valid_after:      valid_after,
-        valid_before:     valid_before,
         public_key:       public_key,
-        valid_principals: valid_principals,
-        critical_options: critical_options,
-        extensions:       extensions,
         ca_key:           ca_key,
       ))
     end
