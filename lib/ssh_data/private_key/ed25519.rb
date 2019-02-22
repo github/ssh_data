@@ -3,6 +3,20 @@ module SSHData
     class ED25519 < Base
       attr_reader :pk, :sk, :ed25519_key
 
+      # Create from a ::Ed25519::SigningKey instance.
+      #
+      # key - A ::Ed25519::SigningKey instance.
+      #
+      # Returns a ED25519 instance.
+      def self.from_ed25519(key)
+        new(
+          algo: PublicKey::ALGO_ED25519,
+          pk: key.verify_key.to_bytes,
+          sk: key.to_bytes + key.verify_key.to_bytes,
+          comment: "",
+        )
+      end
+
       def initialize(algo:, pk:, sk:, comment:)
         unless algo == PublicKey::ALGO_ED25519
           raise DecodeError, "bad algorithm: #{algo.inspect}"

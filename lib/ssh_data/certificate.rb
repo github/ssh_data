@@ -143,6 +143,16 @@ module SSHData
       )
     end
 
+    # Sign this certificate with a private key.
+    #
+    # private_key - An SSHData::PrivateKey::Base subclass instance.
+    #
+    # Returns nothing.
+    def sign(private_key)
+      @ca_key = private_key.public_key
+      @signature = private_key.sign(signed_data)
+    end
+
     # Verify the certificate's signature.
     #
     # Returns boolean.

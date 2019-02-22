@@ -1,6 +1,11 @@
 require_relative "./spec_helper"
 
 describe SSHData::Certificate do
+  let(:rsa_ca)     { SSHData::PrivateKey::RSA.from_openssl(OpenSSL::PKey::RSA.generate(2048)) }
+  let(:dsa_ca)     { SSHData::PrivateKey::DSA.from_openssl(OpenSSL::PKey::DSA.generate(1024)) }
+  let(:ecdsa_ca)   { SSHData::PrivateKey::ECDSA.from_openssl(OpenSSL::PKey::EC.new("prime256v1").tap(&:generate_key)) }
+  let(:ed25519_ca) { SSHData::PrivateKey::ED25519.from_ed25519(Ed25519::SigningKey.generate) }
+
   it "supports the deprecated Certificate.parse method" do
     expect {
       described_class.parse(fixture("rsa_leaf_for_rsa_ca-cert.pub"))
@@ -117,7 +122,6 @@ describe SSHData::Certificate do
     SSHData::PublicKey::ED25519         # ca key type
   ]
 
-
   test_cases.each do |name, fixture_name, algo, public_key_class, ca_key_class|
     describe(name) do
       let(:openssh) { fixture(fixture_name).strip }
@@ -145,6 +149,27 @@ describe SSHData::Certificate do
       it "encodes correctly" do
         expect(subject.openssh(comment: comment)).to eq(openssh)
       end
+
+      it "can be signed with an RSA key" do
+        expect { subject.sign(rsa_ca) }.to change {subject.signature}
+        expect(subject.verify).to eq(true)
+      end
+
+      it "can be signed with an DSA key" do
+        expect { subject.sign(dsa_ca) }.to change {subject.signature}
+        expect(subject.verify).to eq(true)
+      end
+
+      it "can be signed with an ECDSA key" do
+        expect { subject.sign(ecdsa_ca) }.to change {subject.signature}
+        expect(subject.verify).to eq(true)
+      end
+
+      it "can be signed with an ED25519 key" do
+        expect { subject.sign(ed25519_ca) }.to change {subject.signature}
+        expect(subject.verify).to eq(true)
+      end
+
     end
   end
 end
