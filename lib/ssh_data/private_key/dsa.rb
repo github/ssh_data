@@ -33,6 +33,17 @@
         @public_key = PublicKey::DSA.new(algo: algo, p: p, q: q, g: g, y: y)
       end
 
+      # Make an SSH signature.
+      #
+      # signed_data - The String message over which to calculated the signature.
+      #
+      # Returns a binary String signature.
+      def sign(signed_data)
+        openssl_sig = openssl.sign(OpenSSL::Digest::SHA1.new, signed_data)
+        raw_sig = PublicKey::DSA.ssh_signature(openssl_sig)
+        Encoding.encode_signature(algo, raw_sig)
+      end
+
       private
 
       def asn1

@@ -120,6 +120,13 @@ module SSHData
         super && other.curve == curve && other.public_key_bytes == public_key_bytes
       end
 
+      # The digest algorithm to use with this key's curve.
+      #
+      # Returns an OpenSSL::Digest.
+      def digest
+        DIGEST_FOR_CURVE[curve]
+      end
+
       private
 
       def asn1

@@ -44,6 +44,17 @@ module SSHData
         )
       end
 
+      # Make an SSH signature.
+      #
+      # signed_data - The String message over which to calculated the signature.
+      #
+      # Returns a binary String signature.
+      def sign(signed_data)
+        openssl_sig = openssl.sign(public_key.digest.new, signed_data)
+        raw_sig = PublicKey::ECDSA.ssh_signature(openssl_sig)
+        Encoding.encode_signature(algo, raw_sig)
+      end
+
       private
 
       def asn1

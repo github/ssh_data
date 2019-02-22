@@ -35,6 +35,16 @@ module SSHData
         @public_key = PublicKey::RSA.new(algo: algo, e: e, n: n)
       end
 
+      # Make an SSH signature.
+      #
+      # signed_data - The String message over which to calculated the signature.
+      #
+      # Returns a binary String signature.
+      def sign(signed_data)
+        raw_sig = openssl.sign(OpenSSL::Digest::SHA1.new, signed_data)
+        Encoding.encode_signature(algo, raw_sig)
+      end
+
       private
 
       # CRT coefficient for faster RSA operations. Used by OpenSSL, but not

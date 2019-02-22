@@ -28,6 +28,16 @@ module SSHData
 
         @public_key = PublicKey::ED25519.new(algo: algo, pk: pk)
       end
+
+      # Make an SSH signature.
+      #
+      # signed_data - The String message over which to calculated the signature.
+      #
+      # Returns a binary String signature.
+      def sign(signed_data)
+        raw_sig = ed25519_key.sign(signed_data)
+        Encoding.encode_signature(algo, raw_sig)
+      end
     end
   end
 end

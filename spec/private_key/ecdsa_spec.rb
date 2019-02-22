@@ -17,8 +17,13 @@ describe SSHData::PrivateKey::ECDSA do
       let(:private_key) { OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key) }
       let(:public_key)  { OpenSSL::PKey::EC.new(private_key.to_der).tap { |k| k.private_key = nil } }
       let(:comment)     { "asdf" }
+      let(:message)     { "hello, world!" }
 
       subject { described_class.from_openssl(private_key) }
+
+      it "can sign messages" do
+        expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
+      end
 
       it "has an algo" do
         expect(subject.algo).to eq(algo)
