@@ -23,6 +23,15 @@ module SSHData
       def sign(signed_data)
         raise "implement me"
       end
+
+      # Issue a certificate using this private key.
+      #
+      # kwargs - See SSHData::Certificate.new.
+      #
+      # Returns a SSHData::Certificate instance.
+      def issue_certificate(**kwargs)
+        Certificate.new(**kwargs).tap { |c| c.sign(self) }
+      end
     end
   end
 end
