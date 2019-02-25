@@ -3,6 +3,12 @@ require_relative "../spec_helper"
 describe SSHData::PrivateKey::ECDSA do
   let(:openssh_key) { SSHData::PrivateKey.parse(fixture("ecdsa_leaf_for_rsa_ca")) }
 
+  it "can raises AlgorithmError for unknown curves" do
+    expect {
+      described_class.generate("foo")
+    }.to raise_error(SSHData::AlgorithmError)
+  end
+
   it "can parse openssh-generate keys" do
     keys = openssh_key
     expect(keys).to be_an(Array)
@@ -17,8 +23,19 @@ describe SSHData::PrivateKey::ECDSA do
       let(:private_key) { OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key) }
       let(:public_key)  { OpenSSL::PKey::EC.new(private_key.to_der).tap { |k| k.private_key = nil } }
       let(:comment)     { "asdf" }
+      let(:message)     { "hello, world!" }
 
       subject { described_class.from_openssl(private_key) }
+
+      it "can be generated" do
+        expect {
+          described_class.generate(ssh_curve)
+        }.not_to raise_error
+      end
+
+      it "can sign messages" do
+        expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
+      end
 
       it "has an algo" do
         expect(subject.algo).to eq(algo)

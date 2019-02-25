@@ -3,6 +3,27 @@ module SSHData
     class ED25519 < Base
       attr_reader :pk, :sk, :ed25519_key
 
+      # Generate a new private key.
+      #
+      # Returns a PublicKey::Base subclass instance.
+      def self.generate
+        from_ed25519(Ed25519::SigningKey.generate)
+      end
+
+      # Create from a ::Ed25519::SigningKey instance.
+      #
+      # key - A ::Ed25519::SigningKey instance.
+      #
+      # Returns a ED25519 instance.
+      def self.from_ed25519(key)
+        new(
+          algo: PublicKey::ALGO_ED25519,
+          pk: key.verify_key.to_bytes,
+          sk: key.to_bytes + key.verify_key.to_bytes,
+          comment: "",
+        )
+      end
+
       def initialize(algo:, pk:, sk:, comment:)
         unless algo == PublicKey::ALGO_ED25519
           raise DecodeError, "bad algorithm: #{algo.inspect}"
@@ -27,6 +48,16 @@ module SSHData
         end
 
         @public_key = PublicKey::ED25519.new(algo: algo, pk: pk)
+      end
+
+      # Make an SSH signature.
+      #
+      # signed_data - The String message over which to calculated the signature.
+      #
+      # Returns a binary String signature.
+      def sign(signed_data)
+        raw_sig = ed25519_key.sign(signed_data)
+        Encoding.encode_signature(algo, raw_sig)
       end
     end
   end

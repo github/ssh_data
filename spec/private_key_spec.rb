@@ -21,6 +21,11 @@ describe SSHData::PrivateKey do
       it "generates a SHA256 fingerprint matching ssh-keygen" do
         expect(subject.public_key.fingerprint).to eq(sha256_fpr)
       end
+
+      it "can issue a certificate" do
+        cert_key = SSHData::PrivateKey::ECDSA.generate("nistp256").public_key
+        subject.issue_certificate(public_key: cert_key, key_id: "some ident")
+      end
     end
   end
 

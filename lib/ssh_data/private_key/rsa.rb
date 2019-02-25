@@ -3,6 +3,27 @@ module SSHData
     class RSA < Base
       attr_reader :n, :e, :d, :iqmp, :p, :q, :openssl
 
+
+      # Generate a new private key.
+      #
+      # size                    - The Integer key size to generate.
+      # unsafe_allow_small_key: - Bool of whether to allow keys of less than
+      #                           2048 bits.
+      #
+      # Returns a PublicKey::Base subclass instance.
+      def self.generate(size, unsafe_allow_small_key: false)
+        unless size >= 2048 || unsafe_allow_small_key
+          raise AlgorithmError, "key too small"
+        end
+
+        from_openssl(OpenSSL::PKey::RSA.generate(size))
+      end
+
+      # Import an openssl private key.
+      #
+      # key - An OpenSSL::PKey::DSA instance.
+      #
+      # Returns a DSA instance.
       def self.from_openssl(key)
         new(
           algo: PublicKey::ALGO_RSA,
@@ -33,6 +54,16 @@ module SSHData
         @openssl = OpenSSL::PKey::RSA.new(asn1.to_der)
 
         @public_key = PublicKey::RSA.new(algo: algo, e: e, n: n)
+      end
+
+      # Make an SSH signature.
+      #
+      # signed_data - The String message over which to calculated the signature.
+      #
+      # Returns a binary String signature.
+      def sign(signed_data)
+        raw_sig = openssl.sign(OpenSSL::Digest::SHA1.new, signed_data)
+        Encoding.encode_signature(algo, raw_sig)
       end
 
       private

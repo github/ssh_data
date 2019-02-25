@@ -4,10 +4,21 @@ describe SSHData::PrivateKey::DSA do
   let(:private_key) { OpenSSL::PKey::DSA.generate(1024) }
   let(:public_key)  { private_key.public_key }
   let(:params)      { private_key.params }
+  let(:message)     { "hello, world!" }
 
   let(:openssh_key) { SSHData::PrivateKey.parse(fixture("dsa_leaf_for_rsa_ca")) }
 
   subject { described_class.from_openssl(private_key) }
+
+  it "can be generated" do
+    expect {
+      described_class.generate
+    }.not_to raise_error
+  end
+
+  it "can sign messages" do
+    expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
+  end
 
   it "has an algo" do
     expect(subject.algo).to eq(SSHData::PublicKey::ALGO_DSA)

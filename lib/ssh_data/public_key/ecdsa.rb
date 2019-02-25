@@ -3,22 +3,26 @@ module SSHData
     class ECDSA < Base
       attr_reader :curve, :public_key_bytes, :openssl
 
+      NISTP256 = "nistp256"
+      NISTP384 = "nistp384"
+      NISTP521 = "nistp521"
+
       OPENSSL_CURVE_NAME_FOR_CURVE = {
-        "nistp256" => "prime256v1",
-        "nistp384" => "secp384r1",
-        "nistp521" => "secp521r1",
+        NISTP256 => "prime256v1",
+        NISTP384 => "secp384r1",
+        NISTP521 => "secp521r1",
       }
 
       CURVE_FOR_OPENSSL_CURVE_NAME = {
-        "prime256v1" => "nistp256",
-        "secp384r1"  => "nistp384",
-        "secp521r1"  => "nistp521",
+        "prime256v1" => NISTP256,
+        "secp384r1"  => NISTP384,
+        "secp521r1"  => NISTP521,
       }
 
       DIGEST_FOR_CURVE = {
-        "nistp256" => OpenSSL::Digest::SHA256,
-        "nistp384" => OpenSSL::Digest::SHA384,
-        "nistp521" => OpenSSL::Digest::SHA512,
+        NISTP256 => OpenSSL::Digest::SHA256,
+        NISTP384 => OpenSSL::Digest::SHA384,
+        NISTP521 => OpenSSL::Digest::SHA512,
       }
 
       # Convert an SSH encoded ECDSA signature to DER encoding for verification with
@@ -100,10 +104,10 @@ module SSHData
         openssl.verify(digest.new, openssl_sig, signed_data)
       end
 
-      # Raw encoding of public key.
+      # RFC4253 binary encoding of the public key.
       #
       # Returns a binary String.
-      def raw
+      def rfc4253
         Encoding.encode_fields(
           [:string, algo],
           [:string, curve],
@@ -118,6 +122,13 @@ module SSHData
       # Returns boolean.
       def ==(other)
         super && other.curve == curve && other.public_key_bytes == public_key_bytes
+      end
+
+      # The digest algorithm to use with this key's curve.
+      #
+      # Returns an OpenSSL::Digest.
+      def digest
+        DIGEST_FOR_CURVE[curve]
       end
 
       private

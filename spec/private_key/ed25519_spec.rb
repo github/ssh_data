@@ -4,6 +4,7 @@ describe SSHData::PrivateKey::ED25519 do
   let(:signing_key) { Ed25519::SigningKey.generate }
   let(:verify_key)  { signing_key.verify_key }
   let(:comment)     { "asdf" }
+  let(:message)     { "hello, world!" }
 
   let(:openssh_key) { SSHData::PrivateKey.parse(fixture("ed25519_leaf_for_rsa_ca")) }
 
@@ -14,6 +15,16 @@ describe SSHData::PrivateKey::ED25519 do
       sk: signing_key.to_bytes + verify_key.to_bytes,
       comment: comment,
     )
+  end
+
+  it "can be generated" do
+    expect {
+      described_class.generate
+    }.not_to raise_error
+  end
+
+  it "can sign messages" do
+    expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
   end
 
   it "has an algo" do

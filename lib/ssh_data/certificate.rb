@@ -1,5 +1,11 @@
+require "securerandom"
+
 module SSHData
   class Certificate
+    # Special values for valid_before and valid_after.
+    BEGINNING_OF_TIME = Time.at(0)
+    END_OF_TIME = Time.at((2**64)-1)
+
     # Integer certificate types
     TYPE_USER = 1
     TYPE_HOST = 2
@@ -59,41 +65,12 @@ module SSHData
       end
 
       # Parse data into better types, where possible.
-      valid_after         = Time.at(data.delete(:valid_after))
-      valid_before        = Time.at(data.delete(:valid_before))
-      public_key          = PublicKey.from_data(data.delete(:key_data))
-      valid_principals, _ = Encoding.decode_strings(data.delete(:valid_principals))
-      critical_options, _ = Encoding.decode_options(data.delete(:critical_options))
-      extensions, _       = Encoding.decode_options(data.delete(:extensions))
+      public_key = PublicKey.from_data(data.delete(:public_key))
+      ca_key     = PublicKey.from_data(data.delete(:signature_key))
 
-      # The signature key is encoded as a string, but we can parse it.
-      sk_raw = data.delete(:signature_key)
-      sk_data, read = Encoding.decode_public_key(sk_raw)
-      if read != sk_raw.bytesize
-        raise DecodeError, "unexpected trailing data"
+      new(**data.merge(public_key: public_key, ca_key: ca_key)).tap do |cert|
+        raise VerifyError unless unsafe_no_verify || cert.verify
       end
-      ca_key = PublicKey.from_data(sk_data)
-
-      unless unsafe_no_verify
-        # The signature is the last field. The signature is calculated over all
-        # preceding data.
-        signed_data_len = raw.bytesize - data[:signature].bytesize - 4
-        signed_data = raw.byteslice(0, signed_data_len)
-
-        unless ca_key.verify(signed_data, data[:signature])
-          raise VerifyError
-        end
-      end
-
-      new(**data.merge(
-        valid_after:      valid_after,
-        valid_before:     valid_before,
-        public_key:       public_key,
-        valid_principals: valid_principals,
-        critical_options: critical_options,
-        extensions:       extensions,
-        ca_key:           ca_key,
-      ))
     end
 
     # Intialize a new Certificate instance.
@@ -120,9 +97,9 @@ module SSHData
     # signature:        - The certificate's String signature field.
     #
     # Returns nothing.
-    def initialize(algo:, nonce:, public_key:, serial:, type:, key_id:, valid_principals:, valid_after:, valid_before:, critical_options:, extensions:, reserved:, ca_key:, signature:)
-      @algo = algo
-      @nonce = nonce
+    def initialize(public_key:, key_id:, algo: nil, nonce: nil, serial: 0, type: TYPE_USER, valid_principals: [], valid_after: BEGINNING_OF_TIME, valid_before: END_OF_TIME, critical_options: {}, extensions: {}, reserved: "", ca_key: nil, signature: "")
+      @algo = algo || Encoding::CERT_ALGO_BY_PUBLIC_KEY_ALGO[public_key.algo]
+      @nonce = nonce || SecureRandom.random_bytes(32)
       @public_key = public_key
       @serial = serial
       @type = type
@@ -136,5 +113,74 @@ module SSHData
       @ca_key = ca_key
       @signature = signature
     end
+
+    # OpenSSH certificate in authorized_keys format (see sshd(8) manual page).
+    #
+    # comment - Optional String comment to append.
+    #
+    # Returns a String key.
+    def openssh(comment: nil)
+      [algo, Base64.strict_encode64(rfc4253), comment].compact.join(" ")
+    end
+
+    # RFC4253 binary encoding of the certificate.
+    #
+    # Returns a binary String.
+    def rfc4253
+      Encoding.encode_fields(
+        [:string,  algo],
+        [:string,  nonce],
+        [:raw,     public_key_without_algo],
+        [:uint64,  serial],
+        [:uint32,  type],
+        [:string,  key_id],
+        [:list,    valid_principals],
+        [:time,    valid_after],
+        [:time,    valid_before],
+        [:options, critical_options],
+        [:options, extensions],
+        [:string,  reserved],
+        [:string,  ca_key.rfc4253],
+        [:string,  signature],
+      )
+    end
+
+    # Sign this certificate with a private key.
+    #
+    # private_key - An SSHData::PrivateKey::Base subclass instance.
+    #
+    # Returns nothing.
+    def sign(private_key)
+      @ca_key = private_key.public_key
+      @signature = private_key.sign(signed_data)
+    end
+
+    # Verify the certificate's signature.
+    #
+    # Returns boolean.
+    def verify
+      ca_key.verify(signed_data, signature)
+    end
+
+    private
+
+    # The portion of the certificate over which the signature is calculated.
+    #
+    # Returns a binary String.
+    def signed_data
+      siglen = self.signature.bytesize + 4
+      rfc4253.byteslice(0...-siglen)
+    end
+
+    # Helper for getting the RFC4253 encoded public key with the first field
+    # (the algorithm) stripped off.
+    #
+    # Returns a String.
+    def public_key_without_algo
+      key = public_key.rfc4253
+      _, algo_len = Encoding.decode_string(key)
+      key.byteslice(algo_len..-1)
+    end
+
   end
 end
