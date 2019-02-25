@@ -1,6 +1,5 @@
 require "openssl"
 require "base64"
-require "securerandom"
 
 module SSHData
   # Break down a key in OpenSSH authorized_keys format (see sshd(8) manual

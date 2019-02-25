@@ -1,8 +1,10 @@
+require "securerandom"
+
 module SSHData
   class Certificate
     # Special values for valid_before and valid_after.
-    FOREVER = Time.at(0)
-    ALWAYS = Time.at((2**64)-1)
+    BEGINNING_OF_TIME = Time.at(0)
+    END_OF_TIME = Time.at((2**64)-1)
 
     # Integer certificate types
     TYPE_USER = 1
@@ -95,7 +97,7 @@ module SSHData
     # signature:        - The certificate's String signature field.
     #
     # Returns nothing.
-    def initialize(public_key:, key_id:, algo: nil, nonce: nil, serial: 0, type: TYPE_USER, valid_principals: [], valid_after: FOREVER, valid_before: ALWAYS, critical_options: {}, extensions: {}, reserved: "", ca_key: nil, signature: "")
+    def initialize(public_key:, key_id:, algo: nil, nonce: nil, serial: 0, type: TYPE_USER, valid_principals: [], valid_after: BEGINNING_OF_TIME, valid_before: END_OF_TIME, critical_options: {}, extensions: {}, reserved: "", ca_key: nil, signature: "")
       @algo = algo || Encoding::CERT_ALGO_BY_PUBLIC_KEY_ALGO[public_key.algo]
       @nonce = nonce || SecureRandom.random_bytes(32)
       @public_key = public_key
