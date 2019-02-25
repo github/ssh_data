@@ -3,6 +3,13 @@ module SSHData
     class ED25519 < Base
       attr_reader :pk, :sk, :ed25519_key
 
+      # Generate a new private key.
+      #
+      # Returns a PublicKey::Base subclass instance.
+      def self.generate
+        from_ed25519(Ed25519::SigningKey.generate)
+      end
+
       # Create from a ::Ed25519::SigningKey instance.
       #
       # key - A ::Ed25519::SigningKey instance.

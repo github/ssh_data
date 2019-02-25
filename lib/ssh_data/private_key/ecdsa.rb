@@ -3,6 +3,25 @@ module SSHData
     class ECDSA < Base
       attr_reader :curve, :public_key_bytes, :private_key_bytes, :openssl
 
+      # Generate a new private key.
+      #
+      # curve - The String curve to use. One of SSHData::PublicKey::NISTP256,
+      #         SSHData::PublicKey::NISTP384, or SSHData::PublicKey::NISTP521.
+      #
+      # Returns a PublicKey::Base subclass instance.
+      def self.generate(curve)
+        openssl_curve = PublicKey::ECDSA::OPENSSL_CURVE_NAME_FOR_CURVE[curve]
+        raise AlgorithmError, "unknown curve: #{curve}" if openssl_curve.nil?
+
+        openssl_key = OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key)
+        from_openssl(openssl_key)
+      end
+
+      # Import an openssl private key.
+      #
+      # key - An OpenSSL::PKey::EC instance.
+      #
+      # Returns a DSA instance.
       def self.from_openssl(key)
         curve = PublicKey::ECDSA::CURVE_FOR_OPENSSL_CURVE_NAME[key.group.curve_name]
         algo = "ecdsa-sha2-#{curve}"

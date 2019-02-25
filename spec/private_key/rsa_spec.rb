@@ -10,6 +10,24 @@ describe SSHData::PrivateKey::RSA do
 
   subject { described_class.from_openssl(private_key) }
 
+  it "can be generated" do
+    expect {
+      described_class.generate(2048)
+    }.not_to raise_error
+  end
+
+  it "raises AlgorithmError on small key sizes" do
+    expect {
+      described_class.generate(1024)
+    }.to raise_error(SSHData::AlgorithmError)
+  end
+
+  it "can generate small keys if unsafe_allow_small_key is passed" do
+    expect {
+      described_class.generate(1024, unsafe_allow_small_key: true)
+    }.not_to raise_error
+  end
+
   it "can sign messages" do
     expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
   end

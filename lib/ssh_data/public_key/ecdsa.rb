@@ -3,22 +3,26 @@ module SSHData
     class ECDSA < Base
       attr_reader :curve, :public_key_bytes, :openssl
 
+      NISTP256 = "nistp256"
+      NISTP384 = "nistp384"
+      NISTP521 = "nistp521"
+
       OPENSSL_CURVE_NAME_FOR_CURVE = {
-        "nistp256" => "prime256v1",
-        "nistp384" => "secp384r1",
-        "nistp521" => "secp521r1",
+        NISTP256 => "prime256v1",
+        NISTP384 => "secp384r1",
+        NISTP521 => "secp521r1",
       }
 
       CURVE_FOR_OPENSSL_CURVE_NAME = {
-        "prime256v1" => "nistp256",
-        "secp384r1"  => "nistp384",
-        "secp521r1"  => "nistp521",
+        "prime256v1" => NISTP256,
+        "secp384r1"  => NISTP384,
+        "secp521r1"  => NISTP521,
       }
 
       DIGEST_FOR_CURVE = {
-        "nistp256" => OpenSSL::Digest::SHA256,
-        "nistp384" => OpenSSL::Digest::SHA384,
-        "nistp521" => OpenSSL::Digest::SHA512,
+        NISTP256 => OpenSSL::Digest::SHA256,
+        NISTP384 => OpenSSL::Digest::SHA384,
+        NISTP521 => OpenSSL::Digest::SHA512,
       }
 
       # Convert an SSH encoded ECDSA signature to DER encoding for verification with

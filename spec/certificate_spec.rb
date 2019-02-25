@@ -1,10 +1,10 @@
 require_relative "./spec_helper"
 
 describe SSHData::Certificate do
-  let(:rsa_ca)     { SSHData::PrivateKey::RSA.from_openssl(OpenSSL::PKey::RSA.generate(2048)) }
-  let(:dsa_ca)     { SSHData::PrivateKey::DSA.from_openssl(OpenSSL::PKey::DSA.generate(1024)) }
-  let(:ecdsa_ca)   { SSHData::PrivateKey::ECDSA.from_openssl(OpenSSL::PKey::EC.new("prime256v1").tap(&:generate_key)) }
-  let(:ed25519_ca) { SSHData::PrivateKey::ED25519.from_ed25519(Ed25519::SigningKey.generate) }
+  let(:rsa_ca)     { SSHData::PrivateKey::RSA.generate(2048) }
+  let(:dsa_ca)     { SSHData::PrivateKey::DSA.generate }
+  let(:ecdsa_ca)   { SSHData::PrivateKey::ECDSA.generate("nistp256") }
+  let(:ed25519_ca) { SSHData::PrivateKey::ED25519.generate }
 
   it "supports the deprecated Certificate.parse method" do
     expect {

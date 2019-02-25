@@ -3,6 +3,18 @@
     class DSA < Base
       attr_reader :p, :q, :g, :x, :y, :openssl
 
+      # Generate a new private key.
+      #
+      # Returns a PublicKey::Base subclass instance.
+      def self.generate
+        from_openssl(OpenSSL::PKey::DSA.generate(1024))
+      end
+
+      # Import an openssl private key.
+      #
+      # key - An OpenSSL::PKey::DSA instance.
+      #
+      # Returns a DSA instance.
       def self.from_openssl(key)
         new(
           algo: PublicKey::ALGO_DSA,
