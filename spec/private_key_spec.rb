@@ -36,7 +36,7 @@ describe SSHData::PrivateKey do
       it "raises DecodeError parsing #{name}" do
         expect {
           described_class.parse(fixture(name))
-        }.to raise_error(SSHData::DecryptError)
+        }.to raise_error(SSHData::DecodeError)
       end
     end
   end
