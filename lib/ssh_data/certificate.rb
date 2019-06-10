@@ -148,11 +148,12 @@ module SSHData
     # Sign this certificate with a private key.
     #
     # private_key - An SSHData::PrivateKey::Base subclass instance.
+    # algo:       - Optionally specify the signature algorithm to use.
     #
     # Returns nothing.
-    def sign(private_key)
+    def sign(private_key, algo: nil)
       @ca_key = private_key.public_key
-      @signature = private_key.sign(signed_data)
+      @signature = private_key.sign(signed_data, algo: algo)
     end
 
     # Verify the certificate's signature.

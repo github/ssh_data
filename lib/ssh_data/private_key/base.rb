@@ -27,11 +27,12 @@ module SSHData
 
       # Issue a certificate using this private key.
       #
-      # kwargs - See SSHData::Certificate.new.
+      # signature_algo: - Optionally specify the signature algorithm to use.
+      # kwargs          - See SSHData::Certificate.new.
       #
       # Returns a SSHData::Certificate instance.
-      def issue_certificate(**kwargs)
-        Certificate.new(**kwargs).tap { |c| c.sign(self) }
+      def issue_certificate(signature_algo: nil, **kwargs)
+        Certificate.new(**kwargs).tap { |c| c.sign(self, algo: signature_algo) }
       end
     end
   end

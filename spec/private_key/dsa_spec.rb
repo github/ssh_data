@@ -5,6 +5,7 @@ describe SSHData::PrivateKey::DSA do
   let(:public_key)  { private_key.public_key }
   let(:params)      { private_key.params }
   let(:message)     { "hello, world!" }
+  let(:cert_key)    { SSHData::PrivateKey::DSA.generate.public_key }
 
   let(:openssh_key) { SSHData::PrivateKey.parse(fixture("dsa_leaf_for_rsa_ca")) }
 
@@ -32,6 +33,16 @@ describe SSHData::PrivateKey::DSA do
   it "raises when trying to sign with bad algo" do
     expect {
       subject.sign(message, algo: SSHData::PublicKey::ALGO_RSA)
+    }.to raise_error(SSHData::AlgorithmError)
+  end
+
+  it "raises when trying to sign with bad algo" do
+    expect {
+      subject.issue_certificate(
+        public_key: cert_key,
+        key_id: "some ident",
+        signature_algo: SSHData::PublicKey::ALGO_RSA
+      )
     }.to raise_error(SSHData::AlgorithmError)
   end
 

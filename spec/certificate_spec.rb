@@ -171,6 +171,22 @@ describe SSHData::Certificate do
         expect(subject.verify).to eq(true)
       end
 
+      it "can be signed with an RSA key using ALGO_RSA_SHA2_256" do
+        expect {
+          subject.sign(rsa_ca, algo: SSHData::PublicKey::ALGO_RSA_SHA2_256)
+        }.to change {subject.signature}
+
+        expect(subject.verify).to eq(true)
+      end
+
+      it "can be signed with an RSA key using ALGO_RSA_SHA2_512" do
+        expect {
+          subject.sign(rsa_ca, algo: SSHData::PublicKey::ALGO_RSA_SHA2_512)
+        }.to change {subject.signature}
+
+        expect(subject.verify).to eq(true)
+      end
+
       it "can be signed with an DSA key" do
         expect { subject.sign(dsa_ca) }.to change {subject.signature}
         expect(subject.verify).to eq(true)
