@@ -32,6 +32,27 @@ describe SSHData::PrivateKey::RSA do
     expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
   end
 
+  it "can sign messages with ALGO_RSA" do
+    sig = subject.sign(message, algo: SSHData::PublicKey::ALGO_RSA)
+    expect(subject.public_key.verify(message, sig)).to eq(true)
+  end
+
+  it "can sign messages with ALGO_RSA_SHA2_256" do
+    sig = subject.sign(message, algo: SSHData::PublicKey::ALGO_RSA_SHA2_256)
+    expect(subject.public_key.verify(message, sig)).to eq(true)
+  end
+
+  it "can sign messages with ALGO_RSA_SHA2_512" do
+    sig = subject.sign(message, algo: SSHData::PublicKey::ALGO_RSA_SHA2_512)
+    expect(subject.public_key.verify(message, sig)).to eq(true)
+  end
+
+  it "raises when trying to sign with bad algo" do
+    expect {
+      subject.sign(message, algo: SSHData::PublicKey::ALGO_DSA)
+    }.to raise_error(SSHData::AlgorithmError)
+  end
+
   it "has an algo" do
     expect(subject.algo).to eq(SSHData::PublicKey::ALGO_RSA)
   end

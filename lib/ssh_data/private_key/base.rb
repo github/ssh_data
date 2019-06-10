@@ -18,9 +18,10 @@ module SSHData
       # Make an SSH signature.
       #
       # signed_data - The String message over which to calculated the signature.
+      # algo:       - Optionally specify the signature algorithm to use.
       #
       # Returns a binary String signature.
-      def sign(signed_data)
+      def sign(signed_data, algo: nil)
         raise "implement me"
       end
 

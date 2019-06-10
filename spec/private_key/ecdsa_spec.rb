@@ -37,6 +37,17 @@ describe SSHData::PrivateKey::ECDSA do
         expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
       end
 
+      it "can sign messages with ALGO_ECDSA" do
+        sig = subject.sign(message, algo: algo)
+        expect(subject.public_key.verify(message, sig)).to eq(true)
+      end
+
+      it "raises when trying to sign with bad algo" do
+        expect {
+          subject.sign(message, algo: SSHData::PublicKey::ALGO_RSA)
+        }.to raise_error(SSHData::AlgorithmError)
+      end
+
       it "has an algo" do
         expect(subject.algo).to eq(algo)
       end
