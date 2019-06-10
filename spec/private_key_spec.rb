@@ -1,7 +1,7 @@
 require_relative "./spec_helper"
 
 describe SSHData::PrivateKey do
-  (Dir["spec/fixtures/*for_rsa_ca"] + Dir["spec/fixtures/*.pem"]).each do |path|
+  (Dir["spec/fixtures/*for_rsa_ca"] + Dir["spec/fixtures/*.plaintext.pem"]).each do |path|
     name = File.basename(path)
 
     describe name do
@@ -25,6 +25,18 @@ describe SSHData::PrivateKey do
       it "can issue a certificate" do
         cert_key = SSHData::PrivateKey::ECDSA.generate("nistp256").public_key
         subject.issue_certificate(public_key: cert_key, key_id: "some ident")
+      end
+    end
+  end
+
+  Dir["spec/fixtures/*.encrypted.pem"].each do |path|
+    name = File.basename(path)
+
+    describe name do
+      it "raises DecodeError parsing #{name}" do
+        expect {
+          described_class.parse(fixture(name))
+        }.to raise_error(SSHData::DecryptError)
       end
     end
   end

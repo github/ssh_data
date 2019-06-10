@@ -17,11 +17,11 @@ module SSHData
       when OPENSSH_PEM_TYPE
         parse_openssh(key)
       when RSA_PEM_TYPE
-        [RSA.from_openssl(OpenSSL::PKey::RSA.new(key))]
+        [RSA.from_openssl(OpenSSL::PKey::RSA.new(key, ""))]
       when DSA_PEM_TYPE
-        [DSA.from_openssl(OpenSSL::PKey::DSA.new(key))]
+        [DSA.from_openssl(OpenSSL::PKey::DSA.new(key, ""))]
       when ECDSA_PEM_TYPE
-        [ECDSA.from_openssl(OpenSSL::PKey::EC.new(key))]
+        [ECDSA.from_openssl(OpenSSL::PKey::EC.new(key, ""))]
       when ENCRYPTED_PEM_TYPE
         raise DecryptError, "cannot decode encrypted private keys"
       else
