@@ -10,6 +10,12 @@ ssh-keygen -ted25519 -N "" -f ./ed25519_ca
 ssh-keygen -trsa -N "" -f ./rsa_leaf_for_rsa_ca
 ssh-keygen -s rsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding rsa_leaf_for_rsa_ca.pub
 
+ssh-keygen -trsa -N "" -f ./rsa_leaf_for_rsa_ca_sha2_256
+ssh-keygen -trsa-sha2-256 -s rsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding rsa_leaf_for_rsa_ca_sha2_256.pub
+
+ssh-keygen -trsa -N "" -f ./rsa_leaf_for_rsa_ca_sha2_512
+ssh-keygen -trsa-sha2-512 -s rsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding rsa_leaf_for_rsa_ca_sha2_512.pub
+
 ssh-keygen -trsa -N "" -f ./rsa_leaf_for_dsa_ca
 ssh-keygen -s dsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding rsa_leaf_for_dsa_ca.pub
 

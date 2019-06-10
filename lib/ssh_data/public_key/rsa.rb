@@ -3,6 +3,12 @@ module SSHData
     class RSA < Base
       attr_reader :e, :n, :openssl
 
+      ALGO_DIGESTS = {
+        ALGO_RSA          => OpenSSL::Digest::SHA1,
+        ALGO_RSA_SHA2_256 => OpenSSL::Digest::SHA256,
+        ALGO_RSA_SHA2_512 => OpenSSL::Digest::SHA512
+      }
+
       def initialize(algo:, e:, n:)
         unless algo == ALGO_RSA
           raise DecodeError, "bad algorithm: #{algo.inspect}"
@@ -25,11 +31,13 @@ module SSHData
       # Returns boolean.
       def verify(signed_data, signature)
         sig_algo, raw_sig, _ = Encoding.decode_signature(signature)
-        if sig_algo != ALGO_RSA
+        digest = ALGO_DIGESTS[sig_algo]
+
+        if digest.nil?
           raise DecodeError, "bad signature algorithm: #{sig_algo.inspect}"
         end
 
-        openssl.verify(OpenSSL::Digest::SHA1.new, raw_sig, signed_data)
+        openssl.verify(digest.new, raw_sig, signed_data)
       end
 
       # RFC4253 binary encoding of the public key.

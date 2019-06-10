@@ -8,6 +8,11 @@ module SSHData
     ALGO_ECDSA521 = "ecdsa-sha2-nistp521"
     ALGO_ED25519  = "ssh-ed25519"
 
+    # RSA SHA2 *signature* algorithms used with ALGO_RSA keys.
+    # https://tools.ietf.org/html/draft-rsa-dsa-sha2-256-02
+    ALGO_RSA_SHA2_256 = "rsa-sha2-256"
+    ALGO_RSA_SHA2_512 = "rsa-sha2-512"
+
     ALGOS = [
       ALGO_RSA, ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
       ALGO_ED25519

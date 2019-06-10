@@ -67,6 +67,22 @@ describe SSHData::Certificate do
   ]
 
   test_cases << [
+    :rsa_cert_sha2_256_sig,                  # name
+    "rsa_leaf_for_rsa_ca_sha2_256-cert.pub", # fixture
+    SSHData::Certificate::ALGO_RSA,          # algo
+    SSHData::PublicKey::RSA,                 # public key type
+    SSHData::PublicKey::RSA                  # ca key type
+  ]
+
+  test_cases << [
+    :rsa_cert_sha2_512_sig,                  # name
+    "rsa_leaf_for_rsa_ca_sha2_512-cert.pub", # fixture
+    SSHData::Certificate::ALGO_RSA,          # algo
+    SSHData::PublicKey::RSA,                 # public key type
+    SSHData::PublicKey::RSA                  # ca key type
+  ]
+
+  test_cases << [
     :dsa_cert,                      # name
     "dsa_leaf_for_rsa_ca-cert.pub", # fixture
     SSHData::Certificate::ALGO_DSA, # algo
