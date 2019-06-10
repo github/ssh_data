@@ -5,6 +5,7 @@ describe SSHData::PrivateKey::RSA do
   let(:public_key)  { private_key.public_key }
   let(:params)      { private_key.params }
   let(:message)     { "hello, world!" }
+  let(:cert_key)    { SSHData::PrivateKey::DSA.generate.public_key }
 
   let(:openssh_key) { SSHData::PrivateKey.parse(fixture("rsa_leaf_for_rsa_ca")) }
 
@@ -28,8 +29,48 @@ describe SSHData::PrivateKey::RSA do
     }.not_to raise_error
   end
 
-  it "can sign messages" do
-    expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
+  [
+    nil,
+    SSHData::PublicKey::ALGO_RSA,
+    SSHData::PublicKey::ALGO_RSA_SHA2_256,
+    SSHData::PublicKey::ALGO_RSA_SHA2_512
+  ].each do |signature_algo|
+    it "can sign messages with #{signature_algo}" do
+      sig = subject.sign(message, algo: signature_algo)
+      expect(subject.public_key.verify(message, sig)).to eq(true)
+
+      algo, _ = SSHData::Encoding.decode_signature(sig)
+      expect(algo).to eq(signature_algo || SSHData::PublicKey::ALGO_RSA)
+    end
+
+    it "can issue a certificate with a #{signature_algo} signature" do
+      cert = subject.issue_certificate(
+        public_key: cert_key,
+        key_id: "some ident",
+        signature_algo: signature_algo
+      )
+
+      algo, _ = SSHData::Encoding.decode_signature(cert.signature)
+
+      expect(algo).to eq(signature_algo || SSHData::PublicKey::ALGO_RSA)
+      expect(cert.verify).to be(true)
+    end
+  end
+
+  it "raises when trying to sign with bad algo" do
+    expect {
+      subject.issue_certificate(
+        public_key: cert_key,
+        key_id: "some ident",
+        signature_algo: SSHData::PublicKey::ALGO_DSA
+      )
+    }.to raise_error(SSHData::AlgorithmError)
+  end
+
+  it "raises when trying to issue a certificate with bad signature algo" do
+    expect {
+      subject.sign(message, algo: SSHData::PublicKey::ALGO_DSA)
+    }.to raise_error(SSHData::AlgorithmError)
   end
 
   it "has an algo" do

@@ -67,6 +67,22 @@ describe SSHData::Certificate do
   ]
 
   test_cases << [
+    :rsa_cert_sha2_256_sig,                  # name
+    "rsa_leaf_for_rsa_ca_sha2_256-cert.pub", # fixture
+    SSHData::Certificate::ALGO_RSA,          # algo
+    SSHData::PublicKey::RSA,                 # public key type
+    SSHData::PublicKey::RSA                  # ca key type
+  ]
+
+  test_cases << [
+    :rsa_cert_sha2_512_sig,                  # name
+    "rsa_leaf_for_rsa_ca_sha2_512-cert.pub", # fixture
+    SSHData::Certificate::ALGO_RSA,          # algo
+    SSHData::PublicKey::RSA,                 # public key type
+    SSHData::PublicKey::RSA                  # ca key type
+  ]
+
+  test_cases << [
     :dsa_cert,                      # name
     "dsa_leaf_for_rsa_ca-cert.pub", # fixture
     SSHData::Certificate::ALGO_DSA, # algo
@@ -152,6 +168,22 @@ describe SSHData::Certificate do
 
       it "can be signed with an RSA key" do
         expect { subject.sign(rsa_ca) }.to change {subject.signature}
+        expect(subject.verify).to eq(true)
+      end
+
+      it "can be signed with an RSA key using ALGO_RSA_SHA2_256" do
+        expect {
+          subject.sign(rsa_ca, algo: SSHData::PublicKey::ALGO_RSA_SHA2_256)
+        }.to change {subject.signature}
+
+        expect(subject.verify).to eq(true)
+      end
+
+      it "can be signed with an RSA key using ALGO_RSA_SHA2_512" do
+        expect {
+          subject.sign(rsa_ca, algo: SSHData::PublicKey::ALGO_RSA_SHA2_512)
+        }.to change {subject.signature}
+
         expect(subject.verify).to eq(true)
       end
 

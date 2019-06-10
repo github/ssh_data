@@ -5,6 +5,7 @@ describe SSHData::PrivateKey::ED25519 do
   let(:verify_key)  { signing_key.verify_key }
   let(:comment)     { "asdf" }
   let(:message)     { "hello, world!" }
+  let(:cert_key)    { SSHData::PrivateKey::DSA.generate.public_key }
 
   let(:openssh_key) { SSHData::PrivateKey.parse(fixture("ed25519_leaf_for_rsa_ca")) }
 
@@ -25,6 +26,27 @@ describe SSHData::PrivateKey::ED25519 do
 
   it "can sign messages" do
     expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
+  end
+
+  it "can sign messages with ALGO_ED25519" do
+    sig = subject.sign(message, algo: SSHData::PublicKey::ALGO_ED25519)
+    expect(subject.public_key.verify(message, sig)).to eq(true)
+  end
+
+  it "raises when trying to sign with bad algo" do
+    expect {
+      subject.sign(message, algo: SSHData::PublicKey::ALGO_RSA)
+    }.to raise_error(SSHData::AlgorithmError)
+  end
+
+  it "raises when trying to sign with bad algo" do
+    expect {
+      subject.issue_certificate(
+        public_key: cert_key,
+        key_id: "some ident",
+        signature_algo: SSHData::PublicKey::ALGO_RSA
+      )
+    }.to raise_error(SSHData::AlgorithmError)
   end
 
   it "has an algo" do

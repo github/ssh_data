@@ -50,7 +50,9 @@
       # signed_data - The String message over which to calculated the signature.
       #
       # Returns a binary String signature.
-      def sign(signed_data)
+      def sign(signed_data, algo: nil)
+        algo ||= self.algo
+        raise AlgorithmError unless algo == self.algo
         openssl_sig = openssl.sign(OpenSSL::Digest::SHA1.new, signed_data)
         raw_sig = PublicKey::DSA.ssh_signature(openssl_sig)
         Encoding.encode_signature(algo, raw_sig)

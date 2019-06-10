@@ -61,8 +61,11 @@ module SSHData
       # signed_data - The String message over which to calculated the signature.
       #
       # Returns a binary String signature.
-      def sign(signed_data)
-        raw_sig = openssl.sign(OpenSSL::Digest::SHA1.new, signed_data)
+      def sign(signed_data, algo: nil)
+        algo ||= self.algo
+        digest = PublicKey::RSA::ALGO_DIGESTS[algo]
+        raise AlgorithmError if digest.nil?
+        raw_sig = openssl.sign(digest.new, signed_data)
         Encoding.encode_signature(algo, raw_sig)
       end
 

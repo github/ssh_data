@@ -2,6 +2,7 @@ require_relative "../spec_helper"
 
 describe SSHData::PrivateKey::ECDSA do
   let(:openssh_key) { SSHData::PrivateKey.parse(fixture("ecdsa_leaf_for_rsa_ca")) }
+  let(:cert_key)    { SSHData::PrivateKey::DSA.generate.public_key }
 
   it "can raises AlgorithmError for unknown curves" do
     expect {
@@ -35,6 +36,27 @@ describe SSHData::PrivateKey::ECDSA do
 
       it "can sign messages" do
         expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
+      end
+
+      it "can sign messages with ALGO_ECDSA" do
+        sig = subject.sign(message, algo: algo)
+        expect(subject.public_key.verify(message, sig)).to eq(true)
+      end
+
+      it "raises when trying to sign with bad algo" do
+        expect {
+          subject.sign(message, algo: SSHData::PublicKey::ALGO_RSA)
+        }.to raise_error(SSHData::AlgorithmError)
+      end
+
+      it "raises when trying to sign with bad algo" do
+        expect {
+          subject.issue_certificate(
+            public_key: cert_key,
+            key_id: "some ident",
+            signature_algo: SSHData::PublicKey::ALGO_RSA
+          )
+        }.to raise_error(SSHData::AlgorithmError)
       end
 
       it "has an algo" do
