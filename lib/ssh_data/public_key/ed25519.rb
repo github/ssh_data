@@ -9,6 +9,13 @@ module SSHData
         Object.const_defined?(:Ed25519)
       end
 
+      # Assert that the ed25519 gem has been loaded.
+      #
+      # Returns nothing, raises AlgorithmError.
+      def self.ed25519_gem_required!
+        raise AlgorithmError, "the ed25519 gem is not loaded" unless enabled?
+      end
+
       def initialize(algo:, pk:)
         unless algo == ALGO_ED25519
           raise DecodeError, "bad algorithm: #{algo.inspect}"
@@ -30,9 +37,7 @@ module SSHData
       #
       # Returns boolean.
       def verify(signed_data, signature)
-        unless self.class.enabled?
-          raise VerifyError, "the ed25519 gem isn't loadedd"
-        end
+        self.class.ed25519_gem_required!
 
         sig_algo, raw_sig, _ = Encoding.decode_signature(signature)
         if sig_algo != ALGO_ED25519

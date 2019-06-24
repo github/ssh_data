@@ -67,15 +67,15 @@ describe SSHData::PublicKey::ED25519 do
 
   it "fails cleanly if the ed25519 gem hasn't been loaded" do
     expect(described_class.enabled?).to be(true)
-     backup = Object.send(:remove_const, :Ed25519)
-     expect(described_class.enabled?).to be(false)
+    backup = Object.send(:remove_const, :Ed25519)
+    expect(described_class.enabled?).to be(false)
 
     begin
       expect {
         SSHData::Certificate.parse_openssh(fixture("rsa_leaf_for_ed25519_ca-cert.pub"),
           unsafe_no_verify: false
         )
-      }.to raise_error(SSHData::VerifyError)
+      }.to raise_error(SSHData::AlgorithmError)
     ensure
       Object.const_set(:Ed25519, backup)
     end
