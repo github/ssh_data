@@ -8,6 +8,7 @@ Gem::Specification.new do |s|
   s.license = "MIT"
   s.homepage = "https://github.com/github/ssh_data"
   s.authors = ["mastahyeti"]
+  s.email = "opensource+ssh_data@github.com"
   s.required_ruby_version = "~> 2.3"
   s.files = Dir["./lib/**/*.rb"] + ["./LICENSE.md"]
 

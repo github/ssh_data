@@ -33,3 +33,14 @@ Here are a few things you can do that will increase the likelihood of your pull 
 - [How to Contribute to Open Source](https://opensource.guide/how-to-contribute/)
 - [Using Pull Requests](https://help.github.com/articles/about-pull-requests/)
 - [GitHub Help](https://help.github.com)
+
+## Releasing
+
+If you are the current maintainer of this gem:
+
+- Merge whatever PRs are to be included in your new version into the `master` branch.
+- Increment the version in [`lib/ssh_data/version.rb`](lib/ssh_data/version.rb), following [SemVer](https://semver.org/).
+- Run `bundle install` to update the version in `Gemfile.lock`.
+- Make a commit with a message lik `bump version to 0.0.1` and push this to `master`.
+- Run `gem build ssh_data.gemspec` to build a new `ssh_data-<VERSION>.gem`.
+- Run `gem push ssh_data-<VERSION>.gem` to publish the new version to rubygems.org.
