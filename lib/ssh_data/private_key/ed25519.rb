@@ -7,6 +7,7 @@ module SSHData
       #
       # Returns a PublicKey::Base subclass instance.
       def self.generate
+        PublicKey::ED25519.ed25519_gem_required!
         from_ed25519(Ed25519::SigningKey.generate)
       end
 
@@ -56,6 +57,7 @@ module SSHData
       #
       # Returns a binary String signature.
       def sign(signed_data, algo: nil)
+        PublicKey::ED25519.ed25519_gem_required!
         algo ||= self.algo
         raise AlgorithmError unless algo == self.algo
         raw_sig = ed25519_key.sign(signed_data)

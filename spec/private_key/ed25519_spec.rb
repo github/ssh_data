@@ -78,4 +78,27 @@ describe SSHData::PrivateKey::ED25519 do
     expect(keys.size).to eq(1)
     expect(keys.first).to be_an(SSHData::PrivateKey::ED25519)
   end
+
+  it "fails cleanly if the ed25519 gem hasn't been loaded" do
+    backup = Object.send(:remove_const, :Ed25519)
+    key = openssh_key.first
+
+    begin
+      expect {
+        expect(key.sk).not_to be_nil
+        expect(key.pk).not_to be_nil
+        expect(key.public_key).not_to be_nil
+      }.not_to raise_error
+
+      expect {
+        described_class.generate
+      }.to raise_error(SSHData::AlgorithmError)
+
+      expect {
+        key.sign(message)
+      }.to raise_error(SSHData::AlgorithmError)
+    ensure
+      Object.const_set(:Ed25519, backup)
+    end
+  end
 end
