@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ssh_data (0.0.10)
+    ssh_data (1.0.0)
 
 GEM
   remote: https://rubygems.org/
@@ -40,4 +40,4 @@ DEPENDENCIES
   ssh_data!
 
 BUNDLED WITH
-   2.0.1
+   2.0.2
