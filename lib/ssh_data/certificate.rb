@@ -1,4 +1,5 @@
 require "securerandom"
+require "ipaddr"
 
 module SSHData
   class Certificate
@@ -22,6 +23,9 @@ module SSHData
       ALGO_RSA, ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
       ALGO_ED25519
     ]
+
+    CRITICAL_OPTION_FORCE_COMMAND  = "force-command"
+    CRITICAL_OPTION_SOURCE_ADDRESS = "source-address"
 
     attr_reader :algo, :nonce, :public_key, :serial, :type, :key_id,
                 :valid_principals, :valid_after, :valid_before,
@@ -161,6 +165,55 @@ module SSHData
     # Returns boolean.
     def verify
       ca_key.verify(signed_data, signature)
+    end
+
+    # The force-command critical option, if present.
+    #
+    # Returns a String or nil.
+    def force_command
+      case value = critical_options[CRITICAL_OPTION_FORCE_COMMAND]
+      when String, NilClass
+        value
+      else
+        raise DecodeError, "bad force-request"
+      end
+    end
+
+    # The source-address critical option, if present.
+    #
+    # Returns an Array of IPAddr instances or nil.
+    def source_address
+      return @source_address if defined?(@source_address)
+
+      value = critical_options[CRITICAL_OPTION_SOURCE_ADDRESS]
+
+      @source_address = case value
+      when String
+        value.split(",").map do |str_addr|
+          begin
+            IPAddr.new(str_addr.strip)
+          rescue IPAddr::InvalidAddressError => e
+            raise DecodeError, "bad source-address: #{e.message}"
+          end
+        end
+      when NilClass
+        nil
+      else
+        raise DecodeError, "bad source-address"
+      end
+    end
+
+    # Check if the given IP address is allowed for use with this certificate.
+    #
+    # address - A String IP address.
+    #
+    # Returns boolean.
+    def allowed_source_address?(address)
+      return true if source_address.nil?
+      parsed_addr = IPAddr.new(address)
+      source_address.any? { |a| a.include?(parsed_addr) }
+    rescue IPAddr::InvalidAddressError
+      return false
     end
 
     private
