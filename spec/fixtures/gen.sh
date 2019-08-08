@@ -34,6 +34,24 @@ ssh-keygen -s rsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O
 ssh-keygen -ted25519 -N "" -f ./ed25519_leaf_for_rsa_ca
 ssh-keygen -s rsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding ed25519_leaf_for_rsa_ca.pub
 
+# critical opts
+ssh-keygen -trsa -N "" -f ./valid_force_command
+ssh-keygen -s rsa_ca -z 123 -O clear -I my-ident -O force-command=asdf valid_force_command.pub
+ssh-keygen -trsa -N "" -f ./invalid_force_command
+ssh-keygen -s rsa_ca -z 123 -O clear -I my-ident -O critical:force-command invalid_force_command.pub
+ssh-keygen -trsa -N "" -f ./single_source_address
+ssh-keygen -s rsa_ca -z 123 -O clear -I my-ident -O source-address=1.1.1.1 single_source_address.pub
+ssh-keygen -trsa -N "" -f ./single_cidr_source_address
+ssh-keygen -s rsa_ca -z 123 -O clear -I my-ident -O source-address=1.1.1.0/24 single_cidr_source_address.pub
+ssh-keygen -trsa -N "" -f ./multiple_cidr_source_address
+ssh-keygen -s rsa_ca -z 123 -O clear -I my-ident -O source-address=1.1.1.0/24,2.2.2.0/24 multiple_cidr_source_address.pub
+ssh-keygen -trsa -N "" -f ./spaces_source_address
+ssh-keygen -s rsa_ca -z 123 -O clear -I my-ident -O critical:source-address="1.1.1.1, 2.2.2.2" spaces_source_address.pub
+ssh-keygen -trsa -N "" -f ./invalid_source_address_flag
+ssh-keygen -s rsa_ca -z 123 -O clear -I my-ident -O critical:source-address invalid_source_address_flag.pub
+ssh-keygen -trsa -N "" -f ./invalid_source_address_bad_ip
+ssh-keygen -s rsa_ca -z 123 -O clear -I my-ident -O critical:source-address=foo invalid_source_address_bad_ip.pub
+
 # pem encoded keys
 openssl genrsa -out rsa.plaintext.pem 2048
 openssl rsa -aes-128-cbc -passout pass:mypass -in rsa.plaintext.pem -out rsa.encrypted.pem

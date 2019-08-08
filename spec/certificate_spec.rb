@@ -56,6 +56,110 @@ describe SSHData::Certificate do
     }.not_to raise_error
   end
 
+  describe "#force_command" do
+    it "parses valid option" do
+      parsed = described_class.parse_openssh(fixture("valid_force_command-cert.pub"))
+      expect(parsed.force_command).to eq("asdf")
+    end
+
+    it "raises on invalid option" do
+      parsed = described_class.parse_openssh(fixture("invalid_force_command-cert.pub"))
+
+      expect {
+        parsed.force_command
+      }.to raise_error(SSHData::DecodeError)
+    end
+  end
+
+  describe "#source_address" do
+    it "is without option" do
+      parsed = described_class.parse_openssh(fixture("rsa_leaf_for_rsa_ca-cert.pub"))
+      expect(parsed.source_address).to be_nil
+    end
+
+    it "parses single address" do
+      parsed = described_class.parse_openssh(fixture("single_source_address-cert.pub"))
+      expect(parsed.source_address).to eq([IPAddr.new("1.1.1.1")])
+    end
+
+    it "parses single CIDR range" do
+      parsed = described_class.parse_openssh(fixture("single_cidr_source_address-cert.pub"))
+      expect(parsed.source_address).to eq([IPAddr.new("1.1.1.0/24")])
+    end
+
+    it "parses multiple CIDR range" do
+      parsed = described_class.parse_openssh(fixture("multiple_cidr_source_address-cert.pub"))
+      expect(parsed.source_address).to eq([IPAddr.new("1.1.1.0/24"), IPAddr.new("2.2.2.0/24")])
+    end
+
+    it "parses option with spaces" do
+      parsed = described_class.parse_openssh(fixture("spaces_source_address-cert.pub"))
+      expect(parsed.source_address).to eq([IPAddr.new("1.1.1.1"), IPAddr.new("2.2.2.2")])
+    end
+
+    it "raises on invalid option" do
+      parsed = described_class.parse_openssh(fixture("invalid_source_address_flag-cert.pub"))
+
+      expect {
+        parsed.source_address
+      }.to raise_error(SSHData::DecodeError)
+    end
+
+    it "raises on invalid IP address in option" do
+      parsed = described_class.parse_openssh(fixture("invalid_source_address_bad_ip-cert.pub"))
+
+      expect {
+        parsed.source_address
+      }.to raise_error(SSHData::DecodeError)
+    end
+  end
+
+  describe "#allowed_source_address?" do
+    let(:public_key) { SSHData::PrivateKey::ED25519.generate.public_key }
+    let(:key_id)     { "some-id" }
+
+    subject {
+      described_class.new(public_key: public_key, key_id: key_id)
+    }
+
+    it "checks single address" do
+      subject.critical_options["source-address"] = "1.1.1.1"
+      expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
+      expect(subject.allowed_source_address?("2.2.2.2")).to be(false)
+    end
+
+    it "checks multiple addresses" do
+      subject.critical_options["source-address"] = "1.1.1.1,2.2.2.2"
+      expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
+      expect(subject.allowed_source_address?("2.2.2.2")).to be(true)
+      expect(subject.allowed_source_address?("3.3.3.3")).to be(false)
+    end
+
+    it "checks single CIDR range" do
+      subject.critical_options["source-address"] = "1.1.1.0/24"
+      expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
+      expect(subject.allowed_source_address?("1.1.1.2")).to be(true)
+      expect(subject.allowed_source_address?("2.2.2.2")).to be(false)
+      expect(subject.allowed_source_address?("1.1.2.1")).to be(false)
+    end
+
+    it "checks multiple CIDR ranges" do
+      subject.critical_options["source-address"] = "1.1.1.0/24,2.2.2.0/24"
+      expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
+      expect(subject.allowed_source_address?("2.2.2.2")).to be(true)
+      expect(subject.allowed_source_address?("3.3.3.3")).to be(false)
+    end
+
+    it "returns false for bad addresses" do
+      subject.critical_options["source-address"] = "1.1.1.1"
+      expect(subject.allowed_source_address?("foo")).to be(false)
+    end
+
+    it "allows any address if option is missing" do
+      expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
+    end
+  end
+
   test_cases = []
 
   test_cases << [
