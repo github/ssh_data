@@ -122,20 +122,34 @@ describe SSHData::Certificate do
       described_class.new(public_key: public_key, key_id: key_id)
     }
 
-    it "checks single address" do
+    it "checks single IPv4 address" do
       subject.critical_options["source-address"] = "1.1.1.1"
       expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
       expect(subject.allowed_source_address?("2.2.2.2")).to be(false)
     end
 
-    it "checks multiple addresses" do
+    it "checks single IPv6 address" do
+      subject.critical_options["source-address"] = "3ffe:505:2::1"
+      expect(subject.allowed_source_address?("3ffe:505:2::1")).to be(true)
+      expect(subject.allowed_source_address?("3ffe:505:2:0::1")).to be(true)
+      expect(subject.allowed_source_address?("3ffe:505:2::2")).to be(false)
+    end
+
+    it "checks multiple IPv4 addresses" do
       subject.critical_options["source-address"] = "1.1.1.1,2.2.2.2"
       expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
       expect(subject.allowed_source_address?("2.2.2.2")).to be(true)
       expect(subject.allowed_source_address?("3.3.3.3")).to be(false)
     end
 
-    it "checks single CIDR range" do
+    it "checks multiple IPv6 addresses" do
+      subject.critical_options["source-address"] = "3ffe:505:2::1,3ffe:505:2::2"
+      expect(subject.allowed_source_address?("3ffe:505:2::1")).to be(true)
+      expect(subject.allowed_source_address?("3ffe:505:2::2")).to be(true)
+      expect(subject.allowed_source_address?("3ffe:505:2::3")).to be(false)
+    end
+
+    it "checks single IPv4 CIDR range" do
       subject.critical_options["source-address"] = "1.1.1.0/24"
       expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
       expect(subject.allowed_source_address?("1.1.1.2")).to be(true)
@@ -143,11 +157,19 @@ describe SSHData::Certificate do
       expect(subject.allowed_source_address?("1.1.2.1")).to be(false)
     end
 
+    it "checks single IPv6 CIDR range" do
+      subject.critical_options["source-address"] = "3ffe:505:2::/112"
+      expect(subject.allowed_source_address?("3ffe:505:2::1")).to be(true)
+      expect(subject.allowed_source_address?("3ffe:505:2::2")).to be(true)
+      expect(subject.allowed_source_address?("3ffe:505:2::1:1")).to be(false)
+    end
+
     it "checks multiple CIDR ranges" do
-      subject.critical_options["source-address"] = "1.1.1.0/24,2.2.2.0/24"
+      subject.critical_options["source-address"] = "1.1.1.0/24,3ffe:505:2::/112"
       expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
-      expect(subject.allowed_source_address?("2.2.2.2")).to be(true)
-      expect(subject.allowed_source_address?("3.3.3.3")).to be(false)
+      expect(subject.allowed_source_address?("3ffe:505:2::1")).to be(true)
+      expect(subject.allowed_source_address?("2.2.2.2")).to be(false)
+      expect(subject.allowed_source_address?("3ffe:505:2::1:1")).to be(false)
     end
 
     it "returns false for bad addresses" do
@@ -157,6 +179,7 @@ describe SSHData::Certificate do
 
     it "allows any address if option is missing" do
       expect(subject.allowed_source_address?("1.1.1.1")).to be(true)
+      expect(subject.allowed_source_address?("3ffe:505:2::1")).to be(true)
     end
   end
 
