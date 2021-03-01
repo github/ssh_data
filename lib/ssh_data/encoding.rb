@@ -67,6 +67,12 @@ module SSHData
       [:pk, :string]
     ]
 
+    # Fields in a SK-ED25519 public key
+    SKED25519_KEY_FIELDS = [
+      [:pk, :string],
+      [:application, :string]
+    ]
+
     PUBLIC_KEY_ALGO_BY_CERT_ALGO = {
       Certificate::ALGO_RSA      => PublicKey::ALGO_RSA,
       Certificate::ALGO_DSA      => PublicKey::ALGO_DSA,
@@ -92,6 +98,7 @@ module SSHData
       PublicKey::ALGO_ECDSA384 => ECDSA_KEY_FIELDS,
       PublicKey::ALGO_ECDSA521 => ECDSA_KEY_FIELDS,
       PublicKey::ALGO_ED25519  => ED25519_KEY_FIELDS,
+      PublicKey::ALGO_SK_ED25519 => SKED25519_KEY_FIELDS,
     }
 
     KEY_FIELDS_BY_PRIVATE_KEY_ALGO = {

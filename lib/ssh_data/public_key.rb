@@ -7,6 +7,8 @@ module SSHData
     ALGO_ECDSA384 = "ecdsa-sha2-nistp384"
     ALGO_ECDSA521 = "ecdsa-sha2-nistp521"
     ALGO_ED25519  = "ssh-ed25519"
+    ALGO_SK_ED25519 = "sk-ssh-ed25519@openssh.com"
+    ALGO_SK_ECDSA256 = "sk-ecdsa-sha2-nistp256@openssh.com"
 
     # RSA SHA2 *signature* algorithms used with ALGO_RSA keys.
     # https://tools.ietf.org/html/draft-rsa-dsa-sha2-256-02
@@ -15,7 +17,7 @@ module SSHData
 
     ALGOS = [
       ALGO_RSA, ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
-      ALGO_ED25519
+      ALGO_ED25519, ALGO_SK_ECDSA256, ALGO_SK_ED25519
     ]
 
     # Parse an OpenSSH public key in authorized_keys format (see sshd(8) manual
@@ -64,6 +66,8 @@ module SSHData
         ECDSA.new(**data)
       when ALGO_ED25519
         ED25519.new(**data)
+      when ALGO_SK_ED25519
+        SKED25519.new(**data)
       else
         raise DecodeError, "unkown algo: #{data[:algo].inspect}"
       end
@@ -76,3 +80,4 @@ require "ssh_data/public_key/rsa"
 require "ssh_data/public_key/dsa"
 require "ssh_data/public_key/ecdsa"
 require "ssh_data/public_key/ed25519"
+require "ssh_data/public_key/sked25519"

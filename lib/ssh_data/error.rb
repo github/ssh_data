@@ -4,4 +4,5 @@ module SSHData
   VerifyError    = Class.new(Error)
   AlgorithmError = Class.new(Error)
   DecryptError   = Class.new(Error)
+  UnsupportedError = Class.new(Error)
 end
