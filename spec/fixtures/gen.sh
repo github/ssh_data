@@ -47,8 +47,8 @@ then
     ssh-keygen -t ed25519-sk  -N "" -f ./sked25519_leaf_for_rsa_ca
     ssh-keygen -s rsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding sked25519_leaf_for_rsa_ca.pub
 
-    ssh-keygen -trsa -N "" -f ./rsa_leaf_for_sked25519_ca
-    ssh-keygen -s sked25519_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding rsa_leaf_for_sked25519_ca.pub
+    ssh-keygen -t ecdsa-sk -N "" -f ./skecdsa_leaf_for_rsa_ca
+    ssh-keygen -s rsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding skecdsa_leaf_for_rsa_ca.pub
 fi
 
 # critical opts

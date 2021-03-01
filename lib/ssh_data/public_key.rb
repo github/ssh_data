@@ -68,6 +68,8 @@ module SSHData
         ED25519.new(**data)
       when ALGO_SK_ED25519
         SKED25519.new(**data)
+      when ALGO_SK_ECDSA256
+        SKECDSA.new(**data)
       else
         raise DecodeError, "unkown algo: #{data[:algo].inspect}"
       end
@@ -81,3 +83,4 @@ require "ssh_data/public_key/dsa"
 require "ssh_data/public_key/ecdsa"
 require "ssh_data/public_key/ed25519"
 require "ssh_data/public_key/sked25519"
+require "ssh_data/public_key/skecdsa"
