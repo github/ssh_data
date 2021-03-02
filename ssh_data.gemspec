@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.files = Dir["./lib/**/*.rb"] + ["./LICENSE.md"]
 
   s.add_development_dependency "ed25519", "~> 1.2"
-  s.add_development_dependency "pry", "~> 0.10"
-  s.add_development_dependency "rspec", "~> 3.5"
-  s.add_development_dependency "rspec-mocks", "~> 3.5"
+  s.add_development_dependency "pry", "~> 0.14"
+  s.add_development_dependency "rspec", "~> 3.10"
+  s.add_development_dependency "rspec-mocks", "~> 3.10"
 end
