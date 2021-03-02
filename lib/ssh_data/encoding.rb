@@ -81,12 +81,13 @@ module SSHData
     ]
 
     PUBLIC_KEY_ALGO_BY_CERT_ALGO = {
-      Certificate::ALGO_RSA      => PublicKey::ALGO_RSA,
-      Certificate::ALGO_DSA      => PublicKey::ALGO_DSA,
-      Certificate::ALGO_ECDSA256 => PublicKey::ALGO_ECDSA256,
-      Certificate::ALGO_ECDSA384 => PublicKey::ALGO_ECDSA384,
-      Certificate::ALGO_ECDSA521 => PublicKey::ALGO_ECDSA521,
-      Certificate::ALGO_ED25519  => PublicKey::ALGO_ED25519,
+      Certificate::ALGO_RSA         => PublicKey::ALGO_RSA,
+      Certificate::ALGO_DSA         => PublicKey::ALGO_DSA,
+      Certificate::ALGO_ECDSA256    => PublicKey::ALGO_ECDSA256,
+      Certificate::ALGO_ECDSA384    => PublicKey::ALGO_ECDSA384,
+      Certificate::ALGO_ECDSA521    => PublicKey::ALGO_ECDSA521,
+      Certificate::ALGO_ED25519     => PublicKey::ALGO_ED25519,
+      Certificate::ALGO_SK_ECDSA256 => PublicKey::ALGO_SK_ECDSA256
     }
 
     CERT_ALGO_BY_PUBLIC_KEY_ALGO = {
@@ -96,6 +97,7 @@ module SSHData
       PublicKey::ALGO_ECDSA384 => Certificate::ALGO_ECDSA384,
       PublicKey::ALGO_ECDSA521 => Certificate::ALGO_ECDSA521,
       PublicKey::ALGO_ED25519  => Certificate::ALGO_ED25519,
+      PublicKey::ALGO_SK_ECDSA256 => Certificate::ALGO_SK_ECDSA256
     }
 
     KEY_FIELDS_BY_PUBLIC_KEY_ALGO = {
