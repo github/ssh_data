@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Set up Ruby ${{ matrix.ruby }}
-      uses: actions/setup-ruby@v1
+      uses: ruby/setup-ruby@fdcfbcf14ec9672f6f615cb9589a1bc5dd69d262
       with:
         ruby-version: ${{ matrix.ruby }}
     - name: Build and test
