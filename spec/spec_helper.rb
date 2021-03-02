@@ -1,6 +1,10 @@
 require "ssh_data"
 require "ed25519"
 
+RSpec.configure do |config|
+  config.color_mode = :off
+end
+
 REPO_PATH    = File.expand_path(File.join(__FILE__, "..", ".."))
 FIXTURE_PATH = File.expand_path(File.join(REPO_PATH, "spec", "fixtures"))
 
