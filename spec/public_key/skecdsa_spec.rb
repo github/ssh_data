@@ -2,6 +2,11 @@ require_relative "../spec_helper"
 
 describe SSHData::PublicKey::SKECDSA do
   let(:openssh_key) { SSHData::PublicKey.parse_openssh(fixture("skecdsa_leaf_for_rsa_ca.pub")) }
+  let(:ec_p384_publickey) { OpenSSL::PKey::EC.new('secp384r1').tap { |k|
+    k.generate_key
+    k.private_key = nil
+    }
+  }
 
   it "can parse openssh-generate keys" do
     expect { openssh_key }.not_to raise_error
@@ -11,12 +16,27 @@ describe SSHData::PublicKey::SKECDSA do
     expect(openssh_key.rfc4253).to eq(fixture("skecdsa_leaf_for_rsa_ca.pub", binary: true))
   end
 
-  it "blows up if the curve doesn't match the key type" do
-    # outer layer claims to be p384, but curve and public key are p256
-    malformed = [SSHData::PublicKey::ALGO_ECDSA384, Base64.strict_encode64([
-      SSHData::Encoding.encode_string(SSHData::PublicKey::ALGO_ECDSA384),
+  it "blows up if the inner key identifier is not a security key" do
+    # outer layer claims to be SK-ECDSA256, but inner key is plain ECDSA256
+    malformed = [SSHData::PublicKey::ALGO_SKECDSA256, Base64.strict_encode64([
+      SSHData::Encoding.encode_string(SSHData::PublicKey::ALGO_ECDSA256),
       SSHData::Encoding.encode_string(openssh_key.curve),
       SSHData::Encoding.encode_string(openssh_key.public_key_bytes),
+      SSHData::Encoding.encode_string('ssh:'),
+    ].join)].join(" ")
+
+    expect {
+      SSHData::PublicKey.parse_openssh(malformed)
+    }.to raise_error(SSHData::DecodeError)
+  end
+
+  it "blows up if the inner key identifier has a mismatched curve" do
+    # outer layer claims to be SK-ECDSA256, but inner key is SK-ECDSA256 with a P384 curve
+    malformed = [SSHData::PublicKey::ALGO_SKECDSA256, Base64.strict_encode64([
+      SSHData::Encoding.encode_string(SSHData::PublicKey::ALGO_SKECDSA256),
+      SSHData::Encoding.encode_string('nistp384'),
+      SSHData::Encoding.encode_string(ec_p384_publickey.to_der),
+      SSHData::Encoding.encode_string('ssh:'),
     ].join)].join(" ")
 
     expect {
