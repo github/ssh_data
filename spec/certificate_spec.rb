@@ -268,7 +268,7 @@ describe SSHData::Certificate do
   test_cases << [
     :skecdsa_leaf_for_rsa_ca,               # name
     "skecdsa_leaf_for_rsa_ca-cert.pub",     # fixture
-    SSHData::Certificate::ALGO_SK_ECDSA256, # algo
+    SSHData::Certificate::ALGO_SKECDSA256,  # algo
     SSHData::PublicKey::SKECDSA,            # public key type
     SSHData::PublicKey::RSA                 # ca key type
   ]
@@ -276,7 +276,7 @@ describe SSHData::Certificate do
   test_cases << [
     :sked25519_leaf_for_rsa_ca,             # name
     "sked25519_leaf_for_rsa_ca-cert.pub",   # fixture
-    SSHData::Certificate::ALGO_SK_ED25519,  # algo
+    SSHData::Certificate::ALGO_SKED25519,   # algo
     SSHData::PublicKey::SKED25519,          # public key type
     SSHData::PublicKey::RSA                 # ca key type
   ]

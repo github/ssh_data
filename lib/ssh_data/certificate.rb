@@ -12,18 +12,18 @@ module SSHData
     TYPE_HOST = 2
 
     # Certificate algorithm identifiers
-    ALGO_RSA         = "ssh-rsa-cert-v01@openssh.com"
-    ALGO_DSA         = "ssh-dss-cert-v01@openssh.com"
-    ALGO_ECDSA256    = "ecdsa-sha2-nistp256-cert-v01@openssh.com"
-    ALGO_ECDSA384    = "ecdsa-sha2-nistp384-cert-v01@openssh.com"
-    ALGO_ECDSA521    = "ecdsa-sha2-nistp521-cert-v01@openssh.com"
-    ALGO_ED25519     = "ssh-ed25519-cert-v01@openssh.com"
-    ALGO_SK_ECDSA256 = "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com"
-    ALGO_SK_ED25519  = "sk-ssh-ed25519-cert-v01@openssh.com"
+    ALGO_RSA        = "ssh-rsa-cert-v01@openssh.com"
+    ALGO_DSA        = "ssh-dss-cert-v01@openssh.com"
+    ALGO_ECDSA256   = "ecdsa-sha2-nistp256-cert-v01@openssh.com"
+    ALGO_ECDSA384   = "ecdsa-sha2-nistp384-cert-v01@openssh.com"
+    ALGO_ECDSA521   = "ecdsa-sha2-nistp521-cert-v01@openssh.com"
+    ALGO_ED25519    = "ssh-ed25519-cert-v01@openssh.com"
+    ALGO_SKECDSA256 = "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com"
+    ALGO_SKED25519  = "sk-ssh-ed25519-cert-v01@openssh.com"
 
     ALGOS = [
       ALGO_RSA, ALGO_DSA, ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521,
-      ALGO_ED25519, ALGO_SK_ECDSA256, ALGO_SK_ED25519
+      ALGO_ED25519, ALGO_SKECDSA256, ALGO_SKED25519
     ]
 
     CRITICAL_OPTION_FORCE_COMMAND  = "force-command"

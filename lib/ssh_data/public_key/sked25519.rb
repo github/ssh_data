@@ -9,7 +9,7 @@ module SSHData
       end
       
       def self.algorithm_identifier
-        ALGO_SK_ED25519
+        ALGO_SKED25519
       end
 
       def rfc4253

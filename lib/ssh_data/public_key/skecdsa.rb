@@ -8,7 +8,7 @@ module SSHData
       }
 
       def self.check_algorithm!(algo, curve)
-        unless algo == ALGO_SK_ECDSA256
+        unless algo == ALGO_SKECDSA256
           raise DecodeError, "bad algorithm: #{algo.inspect}"
         end
 
