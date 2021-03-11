@@ -16,8 +16,12 @@ module SSHData
         raise AlgorithmError, "the ed25519 gem is not loaded" unless enabled?
       end
 
+      def self.algorithm_identifier
+        ALGO_ED25519
+      end
+
       def initialize(algo:, pk:)
-        unless algo == ALGO_ED25519
+        unless algo == self.class.algorithm_identifier
           raise DecodeError, "bad algorithm: #{algo.inspect}"
         end
 
@@ -40,7 +44,7 @@ module SSHData
         self.class.ed25519_gem_required!
 
         sig_algo, raw_sig, _ = Encoding.decode_signature(signature)
-        if sig_algo != ALGO_ED25519
+        if sig_algo != self.class.algorithm_identifier
           raise DecodeError, "bad signature algorithm: #{sig_algo.inspect}"
         end
 

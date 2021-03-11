@@ -65,7 +65,7 @@ module SSHData
         [Encoding.encode_mpint(r.value), Encoding.encode_mpint(s.value)].join
       end
 
-      def initialize(algo:, curve:, public_key:)
+      def self.check_algorithm!(algo, curve)
         unless [ALGO_ECDSA256, ALGO_ECDSA384, ALGO_ECDSA521].include?(algo)
           raise DecodeError, "bad algorithm: #{algo.inspect}"
         end
@@ -73,6 +73,10 @@ module SSHData
         unless algo == "ecdsa-sha2-#{curve}"
           raise DecodeError, "bad curve: #{curve.inspect}"
         end
+      end
+
+      def initialize(algo:, curve:, public_key:)
+        self.class.check_algorithm!(algo, curve)
 
         @curve = curve
         @public_key_bytes = public_key

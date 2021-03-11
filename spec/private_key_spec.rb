@@ -1,7 +1,7 @@
 require_relative "./spec_helper"
 
 describe SSHData::PrivateKey do
-  (Dir["spec/fixtures/*for_rsa_ca"] + Dir["spec/fixtures/*.plaintext.pem"]).each do |path|
+  (Dir["spec/fixtures/*for_rsa_ca"].reject { |p| p =~ /skecdsa|sked25519/ } + Dir["spec/fixtures/*.plaintext.pem"]).each do |path|
     name = File.basename(path)
 
     describe name do

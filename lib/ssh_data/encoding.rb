@@ -62,27 +62,44 @@ module SSHData
       [:public_key, :string]
     ]
 
+    # Fields in an SK-ECDSA public key
+    SKECDSA_KEY_FIELDS = [
+      [:curve,      :string],
+      [:public_key, :string],
+      [:application, :string]
+    ]
+
     # Fields in a ED25519 public key
     ED25519_KEY_FIELDS = [
       [:pk, :string]
     ]
 
+    # Fields in a SK-ED25519 public key
+    SKED25519_KEY_FIELDS = [
+      [:pk, :string],
+      [:application, :string]
+    ]
+
     PUBLIC_KEY_ALGO_BY_CERT_ALGO = {
-      Certificate::ALGO_RSA      => PublicKey::ALGO_RSA,
-      Certificate::ALGO_DSA      => PublicKey::ALGO_DSA,
-      Certificate::ALGO_ECDSA256 => PublicKey::ALGO_ECDSA256,
-      Certificate::ALGO_ECDSA384 => PublicKey::ALGO_ECDSA384,
-      Certificate::ALGO_ECDSA521 => PublicKey::ALGO_ECDSA521,
-      Certificate::ALGO_ED25519  => PublicKey::ALGO_ED25519,
+      Certificate::ALGO_RSA        => PublicKey::ALGO_RSA,
+      Certificate::ALGO_DSA        => PublicKey::ALGO_DSA,
+      Certificate::ALGO_ECDSA256   => PublicKey::ALGO_ECDSA256,
+      Certificate::ALGO_ECDSA384   => PublicKey::ALGO_ECDSA384,
+      Certificate::ALGO_ECDSA521   => PublicKey::ALGO_ECDSA521,
+      Certificate::ALGO_ED25519    => PublicKey::ALGO_ED25519,
+      Certificate::ALGO_SKECDSA256 => PublicKey::ALGO_SKECDSA256,
+      Certificate::ALGO_SKED25519  => PublicKey::ALGO_SKED25519,
     }
 
     CERT_ALGO_BY_PUBLIC_KEY_ALGO = {
-      PublicKey::ALGO_RSA      => Certificate::ALGO_RSA,
-      PublicKey::ALGO_DSA      => Certificate::ALGO_DSA,
-      PublicKey::ALGO_ECDSA256 => Certificate::ALGO_ECDSA256,
-      PublicKey::ALGO_ECDSA384 => Certificate::ALGO_ECDSA384,
-      PublicKey::ALGO_ECDSA521 => Certificate::ALGO_ECDSA521,
-      PublicKey::ALGO_ED25519  => Certificate::ALGO_ED25519,
+      PublicKey::ALGO_RSA        => Certificate::ALGO_RSA,
+      PublicKey::ALGO_DSA        => Certificate::ALGO_DSA,
+      PublicKey::ALGO_ECDSA256   => Certificate::ALGO_ECDSA256,
+      PublicKey::ALGO_ECDSA384   => Certificate::ALGO_ECDSA384,
+      PublicKey::ALGO_ECDSA521   => Certificate::ALGO_ECDSA521,
+      PublicKey::ALGO_ED25519    => Certificate::ALGO_ED25519,
+      PublicKey::ALGO_SKECDSA256 => Certificate::ALGO_SKECDSA256,
+      PublicKey::ALGO_SKED25519  => Certificate::ALGO_SKED25519,
     }
 
     KEY_FIELDS_BY_PUBLIC_KEY_ALGO = {
@@ -92,6 +109,8 @@ module SSHData
       PublicKey::ALGO_ECDSA384 => ECDSA_KEY_FIELDS,
       PublicKey::ALGO_ECDSA521 => ECDSA_KEY_FIELDS,
       PublicKey::ALGO_ED25519  => ED25519_KEY_FIELDS,
+      PublicKey::ALGO_SKED25519 => SKED25519_KEY_FIELDS,
+      PublicKey::ALGO_SKECDSA256 => SKECDSA_KEY_FIELDS,
     }
 
     KEY_FIELDS_BY_PRIVATE_KEY_ALGO = {
