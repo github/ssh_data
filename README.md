@@ -1,4 +1,4 @@
-# ssh_data [<kbd>docs</kbd>](https://rubydoc.info/github/github/ssh_data/master)
+ssh_data [<kbd>docs</kbd>](https://rubydoc.info/github/github/ssh_data/master)
 
 This is a Ruby library for processing SSH keys and certificates.
 
