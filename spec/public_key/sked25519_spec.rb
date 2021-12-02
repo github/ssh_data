@@ -57,10 +57,6 @@ describe SSHData::PublicKey::SKED25519 do
     expect(subject.ed25519_key.to_bytes).to eq(verify_key.to_bytes)
   end
 
-  it "can not verify signatures" do
-    expect { subject.verify(msg, sig) }.to raise_error(SSHData::UnsupportedError)
-  end
-
   it "can be rencoded" do
     expect(openssh_key.rfc4253).to eq(fixture("sked25519_leaf_for_rsa_ca.pub", binary: true))
   end

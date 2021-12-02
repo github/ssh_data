@@ -1,0 +1,105 @@
+# frozen_string_literal: true
+
+module SSHData
+  class Signature
+    PEM_TYPE = "SSH SIGNATURE"
+    SIGNATURE_PREAMBLE = "SSHSIG"
+    MIN_SUPPORTED_VERSION = 1
+    MAX_SUPPORTED_VERSION = 1
+
+    # Spec: no SHA1 or SHA384. In practice, OpenSSH is always going to use SHA512.
+    # Note the actual signing / verify primitive may use a different hash algorithm.
+    # https://github.com/openssh/openssh-portable/blob/b7ffbb17e37f59249c31f1ff59d6c5d80888f689/PROTOCOL.sshsig#L67
+    SUPPORTED_HASH_ALGORITHMS = {
+      "sha256" => OpenSSL::Digest::SHA256,
+      "sha512" => OpenSSL::Digest::SHA512,
+    }
+
+    PERMITTED_RSA_SIGNATURE_ALGORITHMS = [
+      PublicKey::ALGO_RSA_SHA2_256,
+      PublicKey::ALGO_RSA_SHA2_512,
+    ]
+
+    attr_reader :sigversion, :namespace, :signature, :reserved, :hashalgorithm
+
+    # Parses a PEM armored SSH signature.
+    # pem - A PEM encoded SSH signature.
+    #
+    # Returns a Signature instance.
+    def self.parse_pem(pem)
+      pem_type = Encoding.pem_type(pem)
+
+      if pem_type != PEM_TYPE
+        raise DecodeError, "Mismatched PEM type. Expecting '#{PEM_TYPE}', actually '#{pem_type}'."
+      end
+
+      blob = Encoding.decode_pem(pem, pem_type)
+      self.parse_blob(blob)
+    end
+
+    def self.parse_blob(blob)
+      data, read = Encoding.decode_openssh_signature(blob)
+
+      if read != blob.bytesize
+        raise DecodeError, "unexpected trailing data"
+      end
+
+      new(**data)
+    end
+
+    def initialize(sigversion:, publickey:, namespace:, reserved:, hashalgorithm:, signature:)
+      if sigversion > MAX_SUPPORTED_VERSION || sigversion < MIN_SUPPORTED_VERSION
+        raise UnsupportedError, "Signature version is not supported"
+      end
+
+      unless SUPPORTED_HASH_ALGORITHMS.has_key?(hashalgorithm)
+        raise UnsupportedError, "Hash algorithm #{hashalgorithm} is not supported."
+      end
+
+      # Spec: empty namespaces are not permitted.
+      # https://github.com/openssh/openssh-portable/blob/b7ffbb17e37f59249c31f1ff59d6c5d80888f689/PROTOCOL.sshsig#L57
+      raise UnsupportedError, "A namespace is required." if namespace.empty?
+
+      # Spec: ignore 'reserved', don't need to validate that it is empty.
+
+      @sigversion = sigversion
+      @publickey = publickey
+      @namespace = namespace
+      @reserved = reserved
+      @hashalgorithm = hashalgorithm
+      @signature = signature
+    end
+
+    def verify(signed_data)
+      key = public_key
+      digest_algorithm = SUPPORTED_HASH_ALGORITHMS[@hashalgorithm]
+
+      if key.is_a?(PublicKey::RSA)
+        sig_algo, * = Encoding.decode_signature(@signature)
+
+        # Spec: If the signature is an RSA signature, the legacy 'ssh-rsa'
+        # identifer is not permitted.
+        # https://github.com/openssh/openssh-portable/blob/b7ffbb17e37f59249c31f1ff59d6c5d80888f689/PROTOCOL.sshsig#L72
+        unless PERMITTED_RSA_SIGNATURE_ALGORITHMS.include?(sig_algo)
+          raise UnsupportedError, "RSA signature #{sig_algo} is not supported."
+        end
+      end
+
+      raise AlgorithmError, "Unsupported digest algorithm #{@hashalgorithm}" if digest_algorithm.nil?
+
+      message_digest = digest_algorithm.digest(signed_data)
+      blob =
+        SIGNATURE_PREAMBLE +
+        Encoding.encode_string(@namespace) +
+        Encoding.encode_string(@reserved || "") +
+        Encoding.encode_string(@hashalgorithm) +
+        Encoding.encode_string(message_digest)
+
+      key.verify(blob, @signature)
+    end
+
+    def public_key
+      PublicKey.from_data(@publickey)
+    end
+  end
+end

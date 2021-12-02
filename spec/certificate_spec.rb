@@ -281,6 +281,22 @@ describe SSHData::Certificate do
     SSHData::PublicKey::RSA                 # ca key type
   ]
 
+  test_cases << [
+    :rsa_leaf_for_skecdsa_ca,               # name
+    "rsa_leaf_for_skecdsa_ca-cert.pub",     # fixture
+    SSHData::Certificate::ALGO_RSA,         # algo
+    SSHData::PublicKey::RSA,                # public key type
+    SSHData::PublicKey::SKECDSA             # ca key type
+  ]
+
+  test_cases << [
+    :rsa_leaf_for_sked25519_ca,             # name
+    "rsa_leaf_for_sked25519_ca-cert.pub",   # fixture
+    SSHData::Certificate::ALGO_RSA,         # algo
+    SSHData::PublicKey::RSA,                # public key type
+    SSHData::PublicKey::SKED25519           # ca key type
+  ]
+
   test_cases.each do |name, fixture_name, algo, public_key_class, ca_key_class|
     describe(name) do
       let(:openssh) { fixture(fixture_name).strip }

@@ -35,7 +35,33 @@ module SSHData
       end
 
       def verify(signed_data, signature)
-        raise UnsupportedError, "SK-ECDSA verification is not supported."
+        read = 0
+        sig_algo, raw_sig, signature_read = Encoding.decode_signature(signature)
+        read += signature_read
+        sk_flags, sk_flags_read = Encoding.decode_uint8(signature, read)
+        read += sk_flags_read
+        counter, counter_read = Encoding.decode_uint32(signature, read)
+        read += counter_read
+
+        if read != signature.bytesize
+          raise DecodeError, "unexpected trailing data"
+        end
+
+        self.class.check_algorithm!(sig_algo, curve)
+
+        application_hash = OpenSSL::Digest::SHA256.digest(application)
+        message_hash = OpenSSL::Digest::SHA256.digest(signed_data)
+
+        blob =
+          application_hash +
+          Encoding.encode_uint8(sk_flags) +
+          Encoding.encode_uint32(counter) +
+          message_hash
+
+        openssl_sig = self.class.openssl_signature(raw_sig)
+        digest = DIGEST_FOR_CURVE[curve]
+
+        openssl.verify(digest.new, openssl_sig, blob)
       end
 
       def ==(other)
