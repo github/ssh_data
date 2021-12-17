@@ -329,13 +329,13 @@ module SSHData
     def decode_openssh_signature(raw, offset=0)
       total_read = 0
 
-      magic = raw.byteslice(total_read, OPENSSH_SIGNATURE_MAGIC.bytesize)
+      magic = raw.byteslice(offset, OPENSSH_SIGNATURE_MAGIC.bytesize)
       unless magic == OPENSSH_SIGNATURE_MAGIC
         raise DecodeError, "bad OpenSSH signature"
       end
 
       total_read += OPENSSH_SIGNATURE_MAGIC.bytesize
-      offset = total_read
+      offset += total_read
       data, read = decode_fields(raw, OPENSSH_SIGNATURE_FIELDS, offset)
       total_read += read
       [data, total_read]

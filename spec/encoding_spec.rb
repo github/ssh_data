@@ -806,4 +806,33 @@ describe SSHData::Encoding do
       expect(read).to eq(0)
     end
   end
+
+  describe ("#decode_openssh_signature") do
+    let(:signature) {
+      Base64.decode64(%Q(
+        U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgoXgg2XgepEwBr3CQzkHXigy8T8
+        uvs69Dvox5fgnGgPMAAAAEZmlsZQAAAAAAAAAGc2hhNTEyAAAAUwAAAAtzc2gtZWQyNTUx
+        OQAAAECRxENUPwmbRveDvNFOc36EuyMIa6jXWbCVkEQ2dtORyFAnChmr1kHMFX4B9TQm6U
+        ssvYRRUo6ePL5DuAjLP+kD
+      ))
+    }
+
+    it "can decode a signature" do
+      data, total_read = SSHData::Encoding.decode_openssh_signature(signature)
+      expect(total_read).to eq(signature.bytesize)
+      expect(data[:sigversion]).to eq(1)
+      expect(data[:reserved]).to be_empty
+      expect(data[:namespace]).to eq("file")
+      expect(data[:hashalgorithm]).to eq("sha512")
+      expect(data[:signature]).not_to be_empty
+      expect(data[:publickey]).not_to be_empty
+    end
+
+    it "can decode a signature starting at offset" do
+      prefix = "helloworld"
+      signature_appended = prefix + signature
+      data, total_read = SSHData::Encoding.decode_openssh_signature(signature_appended, offset = prefix.bytesize)
+      expect(total_read).to eq(signature.bytesize)
+    end
+  end
 end
