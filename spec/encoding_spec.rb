@@ -823,7 +823,7 @@ describe SSHData::Encoding do
       expect(data[:sigversion]).to eq(1)
       expect(data[:reserved]).to be_empty
       expect(data[:namespace]).to eq("file")
-      expect(data[:hashalgorithm]).to eq("sha512")
+      expect(data[:hash_algorithm]).to eq("sha512")
       expect(data[:signature]).not_to be_empty
       expect(data[:publickey]).not_to be_empty
     end

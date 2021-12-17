@@ -72,7 +72,7 @@ describe SSHData::Signature do
           expect(subject.sigversion).to eq(1)
           expect(subject.namespace).to eq("file")
           expect(subject.reserved).to be_empty
-          expect(subject.hashalgorithm).to eq("sha512")
+          expect(subject.hash_algorithm).to eq("sha512")
         end
       end
     end

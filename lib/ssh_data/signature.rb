@@ -20,7 +20,7 @@ module SSHData
       PublicKey::ALGO_RSA_SHA2_512,
     ]
 
-    attr_reader :sigversion, :namespace, :signature, :reserved, :hashalgorithm
+    attr_reader :sigversion, :namespace, :signature, :reserved, :hash_algorithm
 
     # Parses a PEM armored SSH signature.
     # pem - A PEM encoded SSH signature.
@@ -47,13 +47,13 @@ module SSHData
       new(**data)
     end
 
-    def initialize(sigversion:, publickey:, namespace:, reserved:, hashalgorithm:, signature:)
+    def initialize(sigversion:, publickey:, namespace:, reserved:, hash_algorithm:, signature:)
       if sigversion > MAX_SUPPORTED_VERSION || sigversion < MIN_SUPPORTED_VERSION
         raise UnsupportedError, "Signature version is not supported"
       end
 
-      unless SUPPORTED_HASH_ALGORITHMS.has_key?(hashalgorithm)
-        raise UnsupportedError, "Hash algorithm #{hashalgorithm} is not supported."
+      unless SUPPORTED_HASH_ALGORITHMS.has_key?(hash_algorithm)
+        raise UnsupportedError, "Hash algorithm #{hash_algorithm} is not supported."
       end
 
       # Spec: empty namespaces are not permitted.
@@ -66,13 +66,13 @@ module SSHData
       @publickey = publickey
       @namespace = namespace
       @reserved = reserved
-      @hashalgorithm = hashalgorithm
+      @hash_algorithm = hash_algorithm
       @signature = signature
     end
 
     def verify(signed_data)
       key = public_key
-      digest_algorithm = SUPPORTED_HASH_ALGORITHMS[@hashalgorithm]
+      digest_algorithm = SUPPORTED_HASH_ALGORITHMS[@hash_algorithm]
 
       if key.is_a?(PublicKey::RSA)
         sig_algo, * = Encoding.decode_signature(@signature)
@@ -85,14 +85,14 @@ module SSHData
         end
       end
 
-      raise AlgorithmError, "Unsupported digest algorithm #{@hashalgorithm}" if digest_algorithm.nil?
+      raise AlgorithmError, "Unsupported digest algorithm #{@hash_algorithm}" if digest_algorithm.nil?
 
       message_digest = digest_algorithm.digest(signed_data)
       blob =
         SIGNATURE_PREAMBLE +
         Encoding.encode_string(@namespace) +
         Encoding.encode_string(@reserved || "") +
-        Encoding.encode_string(@hashalgorithm) +
+        Encoding.encode_string(@hash_algorithm) +
         Encoding.encode_string(message_digest)
 
       key.verify(blob, @signature)

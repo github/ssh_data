@@ -8,12 +8,12 @@ module SSHData
     OPENSSH_SIGNATURE_VERSION = 0x01
 
     OPENSSH_SIGNATURE_FIELDS = [
-      [:sigversion,    :uint32],
-      [:publickey,     :string_public_key],
-      [:namespace,     :string],
-      [:reserved,      :string],
-      [:hashalgorithm, :string],
-      [:signature,     :string],
+      [:sigversion,     :uint32],
+      [:publickey,      :string_public_key],
+      [:namespace,      :string],
+      [:reserved,       :string],
+      [:hash_algorithm, :string],
+      [:signature,      :string],
     ]
 
     OPENSSH_PRIVATE_KEY_FIELDS = [
