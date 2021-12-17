@@ -85,8 +85,6 @@ module SSHData
         end
       end
 
-      raise AlgorithmError, "Unsupported digest algorithm #{@hash_algorithm}" if digest_algorithm.nil?
-
       message_digest = digest_algorithm.digest(signed_data)
       blob =
         SIGNATURE_PREAMBLE +
