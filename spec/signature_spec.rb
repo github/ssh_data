@@ -49,7 +49,7 @@ describe SSHData::Signature do
 
   describe "#verify" do
 
-    Dir["spec/fixtures/signatures/message.*no-options.sig"].each do |path|
+    Dir["spec/fixtures/signatures/message.*no-options-individual.sig"].each do |path|
       name = File.basename(path)
 
       describe name do
@@ -73,13 +73,14 @@ describe SSHData::Signature do
           expect(subject.namespace).to eq("file")
           expect(subject.reserved).to be_empty
           expect(subject.hash_algorithm).to eq("sha512")
+          expect(subject.public_key).to be_a_kind_of(::SSHData::PublicKey::Base)
         end
       end
     end
   end
 
   describe "#verify security keys" do
-    Dir["spec/fixtures/signatures/message.*-sk-*no-options.sig"].each do |path|
+    Dir["spec/fixtures/signatures/message.*-sk-*no-options-individual.sig"].each do |path|
       name = File.basename(path)
 
       describe name do
@@ -95,7 +96,7 @@ describe SSHData::Signature do
   end
 
   describe "#verify no-touch" do
-    Dir["spec/fixtures/signatures/message.*no-touch-required.sig"].each do |path|
+    Dir["spec/fixtures/signatures/message.*no-touch-required-individual.sig"].each do |path|
       name = File.basename(path)
 
       describe name do
@@ -133,7 +134,7 @@ describe SSHData::Signature do
 
   describe "#verify verify-required" do
 
-    Dir["spec/fixtures/signatures/message.*verify-required.sig"].each do |path|
+    Dir["spec/fixtures/signatures/message.*verify-required-individual.sig"].each do |path|
       name = File.basename(path)
 
       describe name do
@@ -150,6 +151,39 @@ describe SSHData::Signature do
           subject = described_class.parse_pem(signature)
           expect(subject.verify(bad_data, user_verification_required: true)).to be(false)
         end
+      end
+    end
+  end
+
+  describe "#verify certificates" do
+
+    Dir["spec/fixtures/signatures/message.*no-options-certificate.sig"].each do |path|
+      name = File.basename(path)
+
+      describe name do
+        let(:signature) { File.read(path) }
+        let(:data) { File.read("spec/fixtures/signatures/message") }
+
+        it "parses correctly" do
+          subject = described_class.parse_pem(signature)
+          expect(subject.sigversion).to eq(1)
+          expect(subject.namespace).to eq("file")
+          expect(subject.reserved).to be_empty
+          expect(subject.hash_algorithm).to eq("sha512")
+          expect(subject.public_key).to be_a_kind_of(::SSHData::Certificate)
+        end
+
+        it "verifies with data" do
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(data)).to be(true)
+        end
+
+        it "does not verify with tampered data" do
+          bad_data = data + "bad"
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(bad_data)).to be(false)
+        end
+
       end
     end
   end

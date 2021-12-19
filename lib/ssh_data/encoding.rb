@@ -9,7 +9,7 @@ module SSHData
 
     OPENSSH_SIGNATURE_FIELDS = [
       [:sigversion,     :uint32],
-      [:publickey,      :string_public_key],
+      [:publickey,      :string],
       [:namespace,      :string],
       [:reserved,       :string],
       [:hash_algorithm, :string],

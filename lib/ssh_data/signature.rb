@@ -71,7 +71,11 @@ module SSHData
     end
 
     def verify(signed_data, **opts)
-      key = public_key
+      signing_key = public_key
+
+      # Unwrap the signing key if this signature was created from a certificate.
+      key = signing_key.is_a?(Certificate) ? signing_key.public_key : signing_key
+
       digest_algorithm = SUPPORTED_HASH_ALGORITHMS[@hash_algorithm]
 
       if key.is_a?(PublicKey::RSA)
@@ -100,8 +104,19 @@ module SSHData
       end
     end
 
+    # Gets the public key from the signature.
+    # If the signature was created from a certificate, this will be an
+    # SSHData::Certificate. Otherwise, this will be a PublicKey algorithm.
     def public_key
-      PublicKey.from_data(@publickey)
+      public_key_algorithm, _ = Encoding.decode_string(@publickey)
+
+      if PublicKey::ALGOS.include?(public_key_algorithm)
+        PublicKey.parse_rfc4253(@publickey)
+      elsif Certificate::ALGOS.include?(public_key_algorithm)
+        Certificate.parse_rfc4253(@publickey)
+      else
+        raise UnsupportedError, "Public key algorithm #{public_key_algorithm} is not supported."
+      end
     end
   end
 end
