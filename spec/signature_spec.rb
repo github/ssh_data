@@ -49,7 +49,7 @@ describe SSHData::Signature do
 
   describe "#verify" do
 
-    Dir["spec/fixtures/signatures/message.*.sig"].each do |path|
+    Dir["spec/fixtures/signatures/message.*no-options.sig"].each do |path|
       name = File.basename(path)
 
       describe name do
@@ -76,6 +76,82 @@ describe SSHData::Signature do
         end
       end
     end
-
   end
+
+  describe "#verify security keys" do
+    Dir["spec/fixtures/signatures/message.*-sk-*no-options.sig"].each do |path|
+      name = File.basename(path)
+
+      describe name do
+        let(:signature) { File.read(path) }
+        let(:data) { File.read("spec/fixtures/signatures/message") }
+
+        it "does not verify if user verification is required" do
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(data, user_verification_required: true)).to be(false)
+        end
+      end
+    end
+  end
+
+  describe "#verify no-touch" do
+    Dir["spec/fixtures/signatures/message.*no-touch-required.sig"].each do |path|
+      name = File.basename(path)
+
+      describe name do
+        let(:signature) { File.read(path) }
+        let(:data) { File.read("spec/fixtures/signatures/message") }
+
+        it "verifies with data" do
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(data, user_presence_required: false)).to be(true)
+        end
+
+        it "does not verify with tampered data" do
+          bad_data = data + "bad"
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(bad_data, user_presence_required: false)).to be(false)
+        end
+
+        it "does not verify with user presence" do
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(data, user_presence_required: true)).to be(false)
+        end
+
+        it "does not verify with user presence by default" do
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(data)).to be(false)
+        end
+
+        it "errors on unknown verify options" do
+          subject = described_class.parse_pem(signature)
+          expect { subject.verify(data, potato: :no) }.to raise_error(SSHData::UnsupportedError)
+        end
+      end
+    end
+  end
+
+  describe "#verify verify-required" do
+
+    Dir["spec/fixtures/signatures/message.*verify-required.sig"].each do |path|
+      name = File.basename(path)
+
+      describe name do
+        let(:signature) { File.read(path) }
+        let(:data) { File.read("spec/fixtures/signatures/message") }
+
+        it "verifies with data" do
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(data, user_verification_required: true)).to be(true)
+        end
+
+        it "does not verify with tampered data" do
+          bad_data = data + "bad"
+          subject = described_class.parse_pem(signature)
+          expect(subject.verify(bad_data, user_verification_required: true)).to be(false)
+        end
+      end
+    end
+  end
+
 end

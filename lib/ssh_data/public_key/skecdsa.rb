@@ -37,8 +37,9 @@ module SSHData
 
       def verify(signed_data, signature, **opts)
         opts = DEFAULT_SK_VERIFY_OPTS.merge(opts)
+        unknown_opts = opts.keys - DEFAULT_SK_VERIFY_OPTS.keys
+        raise UnsupportedError, "Verification options #{unknown_opts.inspect} are not supported." unless unknown_opts.empty?
 
-        read = 0
         sig_algo, raw_sig, sk_flags, blob = build_signing_blob(application, signed_data, signature)
         self.class.check_algorithm!(sig_algo, curve)
 
