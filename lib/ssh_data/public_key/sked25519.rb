@@ -1,6 +1,7 @@
 module SSHData
   module PublicKey
     class SKED25519 < ED25519
+      include SecurityKey
       attr_reader :application
 
       def initialize(algo:, pk:, application:)
@@ -23,38 +24,27 @@ module SSHData
         )
       end
 
-      def verify(signed_data, signature)
+      def verify(signed_data, signature, **opts)
         self.class.ed25519_gem_required!
-
-        read = 0
-        sig_algo, raw_sig, signature_read = Encoding.decode_signature(signature)
-        read += signature_read
-        sk_flags, sk_flags_read = Encoding.decode_uint8(signature, read)
-        read += sk_flags_read
-        counter, counter_read = Encoding.decode_uint32(signature, read)
-        read += counter_read
-
-        if read != signature.bytesize
-          raise DecodeError, "unexpected trailing data"
-        end
+        opts = DEFAULT_SK_VERIFY_OPTS.merge(opts)
+        sig_algo, raw_sig, sk_flags, blob = build_signing_blob(application, signed_data, signature)
 
         if sig_algo != self.class.algorithm_identifier
           raise DecodeError, "bad signature algorithm: #{sig_algo.inspect}"
         end
 
-        application_hash = OpenSSL::Digest::SHA256.digest(application)
-        message_hash = OpenSSL::Digest::SHA256.digest(signed_data)
+        result = begin
+            ed25519_key.verify(raw_sig, blob)
+          rescue Ed25519::VerifyError
+            false
+          end
 
-        blob =
-          application_hash +
-          Encoding.encode_uint8(sk_flags) +
-          Encoding.encode_uint32(counter) +
-          message_hash
-
-        begin
-          ed25519_key.verify(raw_sig, blob)
-        rescue Ed25519::VerifyError
+        if opts[:user_presence_required] && (sk_flags & SK_FLAG_USER_PRESENCE != SK_FLAG_USER_PRESENCE)
           false
+        elsif opts[:user_verification_required] && (sk_flags & SK_FLAG_USER_VERIFICATION != SK_FLAG_USER_VERIFICATION)
+          false
+        else
+          result
         end
       end
 

@@ -70,7 +70,7 @@ module SSHData
       @signature = signature
     end
 
-    def verify(signed_data)
+    def verify(signed_data, **opts)
       key = public_key
       digest_algorithm = SUPPORTED_HASH_ALGORITHMS[@hash_algorithm]
 
@@ -93,7 +93,11 @@ module SSHData
         Encoding.encode_string(@hash_algorithm) +
         Encoding.encode_string(message_digest)
 
-      key.verify(blob, @signature)
+      if key.class.include?(::SSHData::PublicKey::SecurityKey)
+        key.verify(blob, @signature, **opts)
+      else
+        key.verify(blob, @signature)
+      end
     end
 
     def public_key

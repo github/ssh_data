@@ -20,6 +20,14 @@ module SSHData
       ALGO_ED25519, ALGO_SKECDSA256, ALGO_SKED25519
     ]
 
+    DEFAULT_SK_VERIFY_OPTS = {
+      user_presence_required: true,
+      user_verification_required: false
+    }
+
+    SK_FLAG_USER_PRESENCE     = 0b001
+    SK_FLAG_USER_VERIFICATION = 0b100
+
     # Parse an OpenSSH public key in authorized_keys format (see sshd(8) manual
     # page).
     #
@@ -78,6 +86,7 @@ module SSHData
 end
 
 require "ssh_data/public_key/base"
+require "ssh_data/public_key/security_key"
 require "ssh_data/public_key/rsa"
 require "ssh_data/public_key/dsa"
 require "ssh_data/public_key/ecdsa"
