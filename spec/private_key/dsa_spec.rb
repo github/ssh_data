@@ -17,6 +17,12 @@ describe SSHData::PrivateKey::DSA do
     }.not_to raise_error
   end
 
+  it "generates default parameters" do
+    key = described_class.generate
+    expect(key.q.num_bits).to eq(160)
+    expect(key.p.num_bits).to eq(1024)
+  end
+
   it "can sign messages" do
     expect(subject.public_key.verify(message, subject.sign(message))).to eq(true)
   end
