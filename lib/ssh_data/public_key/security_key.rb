@@ -1,6 +1,16 @@
 module SSHData
   module PublicKey
     module SecurityKey
+
+      # Defaults to match OpenSSH, user presence is required by verification is not.
+      DEFAULT_SK_VERIFY_OPTS = {
+        user_presence_required: true,
+        user_verification_required: false
+      }
+
+      SK_FLAG_USER_PRESENCE     = 0b001
+      SK_FLAG_USER_VERIFICATION = 0b100
+
       def build_signing_blob(application, signed_data, signature)
         read = 0
         sig_algo, raw_sig, signature_read = Encoding.decode_signature(signature)

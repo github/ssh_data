@@ -42,13 +42,12 @@ module SSHData
             false
           end
 
-        if opts[:user_presence_required] && (sk_flags & SK_FLAG_USER_PRESENCE != SK_FLAG_USER_PRESENCE)
-          false
-        elsif opts[:user_verification_required] && (sk_flags & SK_FLAG_USER_VERIFICATION != SK_FLAG_USER_VERIFICATION)
-          false
-        else
-          result
-        end
+        # We don't know that the flags are correct until after we've validated the signature
+        # which embeds the flags, so always verify the signature first.
+        return false if opts[:user_presence_required] && (sk_flags & SK_FLAG_USER_PRESENCE != SK_FLAG_USER_PRESENCE)
+        return false if opts[:user_verification_required] && (sk_flags & SK_FLAG_USER_VERIFICATION != SK_FLAG_USER_VERIFICATION)
+
+        result
       end
 
       def ==(other)
