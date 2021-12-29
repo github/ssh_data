@@ -865,7 +865,7 @@ describe SSHData::Encoding do
 
     it "fails if the signature is too short" do
       # Hack a byte off at the end.
-      bad_sig = signature.byteslice((..-2))
+      bad_sig = signature.byteslice((0..-2))
       expect { SSHData::Encoding.decode_openssh_signature(bad_sig) }.to raise_error(SSHData::DecodeError)
     end
   end
