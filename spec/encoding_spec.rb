@@ -834,5 +834,39 @@ describe SSHData::Encoding do
       data, total_read = SSHData::Encoding.decode_openssh_signature(signature_appended, offset = prefix.bytesize)
       expect(total_read).to eq(signature.bytesize)
     end
+
+    it "fails if the signature does not begin with wrong magic prefix" do
+      wrong_magic = signature.gsub(/^SSHSIG/, "NOGOOD")
+      expect { SSHData::Encoding.decode_openssh_signature(wrong_magic) }.to raise_error(SSHData::DecodeError)
+    end
+
+    it "fails if the signature is shorter than magic prefix" do
+      short_sig = "OHHI"
+      expect { SSHData::Encoding.decode_openssh_signature(short_sig) }.to raise_error(SSHData::DecodeError)
+    end
+
+    it "fails if the signature has magic but no decodable signature" do
+      bad_sig = "SSHSIGOHNO"
+      expect { SSHData::Encoding.decode_openssh_signature(bad_sig) }.to raise_error(SSHData::DecodeError)
+    end
+
+    it "fails if the signature is corrupt" do
+      # 6 for the magic prefix
+      # 4 for the signature version (int32)
+      # The next 4 will be the length-prefixed the public key.
+      # Corrupt the key by setting the length to something bogus and maintain the rest of the key.
+      start = 6 + 4
+      finish = start + 4
+      bad_sig = signature.dup
+      bad_sig[start...finish] = "\xFF\xFF\xFF\xFF".force_encoding('BINARY')
+      expect(bad_sig.length).to eq(signature.length)
+      expect { SSHData::Encoding.decode_openssh_signature(bad_sig) }.to raise_error(SSHData::DecodeError)
+    end
+
+    it "fails if the signature is too short" do
+      # Hack a byte off at the end.
+      bad_sig = signature.byteslice((..-2))
+      expect { SSHData::Encoding.decode_openssh_signature(bad_sig) }.to raise_error(SSHData::DecodeError)
+    end
   end
 end
