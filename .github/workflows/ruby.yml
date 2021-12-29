@@ -8,12 +8,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        ruby: [ '2.6', '2.7', '3.0' ]
+        ruby: [ '2.6', '2.7', '3.0', '3.1' ]
 
     steps:
     - uses: actions/checkout@master
     - name: Set up Ruby ${{ matrix.ruby }}
-      uses: ruby/setup-ruby@fdcfbcf14ec9672f6f615cb9589a1bc5dd69d262
+      uses: ruby/setup-ruby@f0971f0dd45a5cbb3f119f7db77cc58057c53530
       with:
         ruby-version: ${{ matrix.ruby }}
     - name: Build and test
