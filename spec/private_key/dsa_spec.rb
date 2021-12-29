@@ -1,7 +1,7 @@
 require_relative "../spec_helper"
 
 describe SSHData::PrivateKey::DSA do
-  let(:private_key) { OpenSSL::PKey::DSA.generate(1024) }
+  let(:private_key) { SSHData::PrivateKey::DSA.generate.openssl }
   let(:public_key)  { private_key.public_key }
   let(:params)      { private_key.params }
   let(:message)     { "hello, world!" }

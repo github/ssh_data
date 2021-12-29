@@ -7,7 +7,19 @@
       #
       # Returns a PublicKey::Base subclass instance.
       def self.generate
-        from_openssl(OpenSSL::PKey::DSA.generate(1024))
+        openssl_key =
+          if defined?(OpenSSL::PKey.generate_parameters)
+            dsa_parameters = OpenSSL::PKey.generate_parameters("DSA", {
+              dsa_paramgen_bits: 1024,
+              dsa_paramgen_q_bits: 160
+            })
+
+            OpenSSL::PKey.generate_key(dsa_parameters)
+          else
+            OpenSSL::PKey::DSA.generate(1024)
+          end
+
+        from_openssl(openssl_key)
       end
 
       # Import an openssl private key.
