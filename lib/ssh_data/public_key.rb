@@ -78,6 +78,7 @@ module SSHData
 end
 
 require "ssh_data/public_key/base"
+require "ssh_data/public_key/security_key"
 require "ssh_data/public_key/rsa"
 require "ssh_data/public_key/dsa"
 require "ssh_data/public_key/ecdsa"

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 generate_security_keys=0
-read -p "Generated security key-backed keys (Requires key and user interaction)? [yN] " -n 1 -r
+read -p "Generate security key-backed keys (Requires key and user interaction)? [yN] " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
@@ -14,6 +14,18 @@ ssh-keygen -trsa -N "" -f ./rsa_ca
 ssh-keygen -tdsa -N "" -f ./dsa_ca
 ssh-keygen -tecdsa -N "" -f ./ecdsa_ca
 ssh-keygen -ted25519 -N "" -f ./ed25519_ca
+
+if [[ $generate_security_keys -eq 1 ]]
+then
+    ssh-keygen -ted25519-sk -N "" -f ./sked25519_ca
+    ssh-keygen -tecdsa-sk -N "" -f ./skecdsa_ca
+
+    ssh-keygen -trsa -N "" -f ./rsa_leaf_for_sked25519_ca
+    ssh-keygen -s sked25519_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding rsa_leaf_for_sked25519_ca.pub
+
+    ssh-keygen -trsa -N "" -f ./rsa_leaf_for_skecdsa_ca
+    ssh-keygen -s skecdsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding rsa_leaf_for_skecdsa_ca.pub
+fi
 
 ssh-keygen -trsa -N "" -f ./rsa_leaf_for_rsa_ca
 ssh-keygen -s rsa_ca -z 123 -n p1,p2 -O clear -I my-ident -O critical:foo=bar -O extension:baz=qwer -O permit-X11-forwarding rsa_leaf_for_rsa_ca.pub

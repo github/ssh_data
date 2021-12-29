@@ -109,10 +109,6 @@ describe SSHData::PublicKey::SKECDSA do
         expect(round_tripped).to eq(openssl_sig)
       end
 
-      it "can not verify signatures" do
-        expect { subject.verify(msg, sig) }.to raise_error(SSHData::UnsupportedError)
-      end
-
       it "blows up parsing malformed keys" do
         malformed = [algo, Base64.strict_encode64([
           SSHData::Encoding.encode_string(algo),

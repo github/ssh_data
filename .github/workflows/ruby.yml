@@ -20,5 +20,5 @@ jobs:
       run: |
         gem install bundler
         bundle install --jobs 4 --retry 3
-        chmod 600 ./spec/fixtures/*
+        find ./spec/fixtures -type f -exec chmod 600 -- {} +
         bundle exec rspec

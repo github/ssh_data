@@ -3,6 +3,19 @@ module SSHData
     # Fields in an OpenSSL private key
     # https://github.com/openssh/openssh-portable/blob/master/PROTOCOL.key
     OPENSSH_PRIVATE_KEY_MAGIC = "openssh-key-v1\x00"
+
+    OPENSSH_SIGNATURE_MAGIC = "SSHSIG"
+    OPENSSH_SIGNATURE_VERSION = 0x01
+
+    OPENSSH_SIGNATURE_FIELDS = [
+      [:sigversion,     :uint32],
+      [:publickey,      :string],
+      [:namespace,      :string],
+      [:reserved,       :string],
+      [:hash_algorithm, :string],
+      [:signature,      :string],
+    ]
+
     OPENSSH_PRIVATE_KEY_FIELDS = [
       [:ciphername, :string],
       [:kdfname,    :string],
@@ -311,6 +324,21 @@ module SSHData
       end
 
       [key, str_read]
+    end
+
+    def decode_openssh_signature(raw, offset=0)
+      total_read = 0
+
+      magic = raw.byteslice(offset, OPENSSH_SIGNATURE_MAGIC.bytesize)
+      unless magic == OPENSSH_SIGNATURE_MAGIC
+        raise DecodeError, "bad OpenSSH signature"
+      end
+
+      total_read += OPENSSH_SIGNATURE_MAGIC.bytesize
+      offset += total_read
+      data, read = decode_fields(raw, OPENSSH_SIGNATURE_FIELDS, offset)
+      total_read += read
+      [data, total_read]
     end
 
     # Decode the fields in a certificate.
@@ -678,6 +706,32 @@ module SSHData
     # Returns an encoded representation of the value.
     def encode_uint32(value)
       [value].pack("L>")
+    end
+
+    # Read a uint8 from the provided raw data.
+    #
+    # raw    - A binary String.
+    # offset - The offset into raw at which to read (default 0).
+    #
+    # Returns an Array including the decoded uint8 as an Integer and the
+    # Integer number of bytes read.
+    def decode_uint8(raw, offset=0)
+      if raw.bytesize < offset + 1
+        raise DecodeError, "data too short"
+      end
+
+      uint8 = raw.byteslice(offset, 1).unpack("C").first
+
+      [uint8, 1]
+    end
+
+    # Encoding an integer as a uint8.
+    #
+    # value - The Integer value to encode.
+    #
+    # Returns an encoded representation of the value.
+    def encode_uint8(value)
+      [value].pack("C")
     end
 
     extend self
