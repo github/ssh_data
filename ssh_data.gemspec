@@ -16,4 +16,4 @@ Gem::Specification.new do |s|
   s.add_development_dependency "pry", "~> 0.14"
   s.add_development_dependency "rspec", "~> 3.10"
   s.add_development_dependency "rspec-mocks", "~> 3.10"
-end
+end 
