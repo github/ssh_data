@@ -1,7 +1,7 @@
 require_relative "../spec_helper"
 
 describe SSHData::PrivateKey::DSA do
-  let(:private_key) { OpenSSL::PKey::DSA.generate(1024) }
+  let(:private_key) { SSHData::PrivateKey::DSA.generate.openssl }
   let(:public_key)  { private_key.public_key }
   let(:params)      { private_key.params }
   let(:message)     { "hello, world!" }
@@ -15,6 +15,12 @@ describe SSHData::PrivateKey::DSA do
     expect {
       described_class.generate
     }.not_to raise_error
+  end
+
+  it "generates default parameters" do
+    key = described_class.generate
+    expect(key.q.num_bits).to eq(160)
+    expect(key.p.num_bits).to eq(1024)
   end
 
   it "can sign messages" do
