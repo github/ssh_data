@@ -70,16 +70,14 @@ module SSHData
       @signature = signature
     end
 
-    def verify(signed_data, **opts)
-      signing_key = public_key
-
-      # Unwrap the signing key if this signature was created from a certificate.
-      key = signing_key.is_a?(Certificate) ? signing_key.public_key : signing_key
+    def verify(verification_key, signed_data, **opts)
+      # Unwrap the verification key if this signature was created from a certificate.
+      key = verification_key.is_a?(Certificate) ? verification_key.public_key : verification_key
 
       digest_algorithm = SUPPORTED_HASH_ALGORITHMS[@hash_algorithm]
 
       if key.is_a?(PublicKey::RSA)
-        sig_algo, * = Encoding.decode_signature(@signature)
+        sig_algo = key.algo
 
         # Spec: If the signature is an RSA signature, the legacy 'ssh-rsa'
         # identifer is not permitted.
