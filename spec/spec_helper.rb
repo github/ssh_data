@@ -1,5 +1,6 @@
 require "ssh_data"
 require "ed25519"
+require "rspec-parameterized"
 
 RSpec.configure do |config|
   config.color_mode = :off
