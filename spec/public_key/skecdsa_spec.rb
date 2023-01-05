@@ -2,11 +2,7 @@ require_relative "../spec_helper"
 
 describe SSHData::PublicKey::SKECDSA do
   let(:openssh_key) { SSHData::PublicKey.parse_openssh(fixture("skecdsa_leaf_for_rsa_ca.pub")) }
-  let(:ec_p384_publickey) { OpenSSL::PKey::EC.new('secp384r1').tap { |k|
-    k.generate_key
-    k.private_key = nil
-    }
-  }
+  let(:ec_p384_publickey) { ec_private_to_public(OpenSSL::PKey::EC.generate('secp384r1')) }
 
   it "can parse openssh-generate keys" do
     expect { openssh_key }.not_to raise_error
@@ -48,8 +44,8 @@ describe SSHData::PublicKey::SKECDSA do
     describe openssl_curve do
       let(:algo) { "sk-ecdsa-sha2-#{ssh_curve}@openssh.com" }
 
-      let(:private_key) { OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key) }
-      let(:public_key)  { OpenSSL::PKey::EC.new(private_key.to_der).tap { |k| k.private_key = nil } }
+      let(:private_key) { OpenSSL::PKey::EC.generate(openssl_curve) }
+      let(:public_key)  { ec_private_to_public(private_key) }
 
       let(:msg)         { "hello, world!" }
       let(:digest)      { described_class::DIGEST_FOR_CURVE[ssh_curve].new }
@@ -77,7 +73,7 @@ describe SSHData::PublicKey::SKECDSA do
       end
 
       it "isnt equal to keys with different params" do
-        other_key = OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key)
+        other_key = OpenSSL::PKey::EC.generate(openssl_curve)
 
         expect(subject).not_to eq(described_class.new(
           algo: algo,

@@ -37,8 +37,8 @@ describe SSHData::PublicKey::ECDSA do
     describe openssl_curve do
       let(:algo) { "ecdsa-sha2-#{ssh_curve}" }
 
-      let(:private_key) { OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key) }
-      let(:public_key)  { OpenSSL::PKey::EC.new(private_key.to_der).tap { |k| k.private_key = nil } }
+      let(:private_key) { OpenSSL::PKey::EC.generate(openssl_curve) }
+      let(:public_key)  { ec_private_to_public(private_key) }
 
       let(:msg)         { "hello, world!" }
       let(:digest)      { described_class::DIGEST_FOR_CURVE[ssh_curve].new }
@@ -63,7 +63,7 @@ describe SSHData::PublicKey::ECDSA do
       end
 
       it "isnt equal to keys with different params" do
-        other_key = OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key)
+        other_key = OpenSSL::PKey::EC.generate(openssl_curve)
 
         expect(subject).not_to eq(described_class.new(
           algo: algo,

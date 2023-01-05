@@ -13,7 +13,7 @@ module SSHData
         openssl_curve = PublicKey::ECDSA::OPENSSL_CURVE_NAME_FOR_CURVE[curve]
         raise AlgorithmError, "unknown curve: #{curve}" if openssl_curve.nil?
 
-        openssl_key = OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key)
+        openssl_key = OpenSSL::PKey::EC.generate(openssl_curve)
         from_openssl(openssl_key)
       end
 
