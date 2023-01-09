@@ -24,3 +24,14 @@ def ssh_keygen_fingerprint(name, algo, priv: false)
   out = `ssh-keygen #{"-e" if priv} -E #{algo} -l -f #{File.join(FIXTURE_PATH, name)}`
   out.split(":", 2).last.split(" ").first
 end
+
+def ec_private_to_public(private_key)
+  algorithm_identifier = OpenSSL::ASN1::Sequence.new([
+    OpenSSL::ASN1::ObjectId.new("id-ecPublicKey"),
+    OpenSSL::ASN1::ObjectId.new(private_key.group.curve_name)
+  ])
+
+  subject_public_key = OpenSSL::ASN1::BitString.new(private_key.public_key.to_bn.to_s(2))
+  spki = OpenSSL::ASN1::Sequence.new([algorithm_identifier, subject_public_key])
+  OpenSSL::PKey::EC.new(spki.to_der)
+end

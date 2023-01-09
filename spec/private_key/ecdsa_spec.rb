@@ -21,8 +21,8 @@ describe SSHData::PrivateKey::ECDSA do
     describe openssl_curve do
       let(:algo) { "ecdsa-sha2-#{ssh_curve}" }
 
-      let(:private_key) { OpenSSL::PKey::EC.new(openssl_curve).tap(&:generate_key) }
-      let(:public_key)  { OpenSSL::PKey::EC.new(private_key.to_der).tap { |k| k.private_key = nil } }
+      let(:private_key) { OpenSSL::PKey::EC.generate(openssl_curve) }
+      let(:public_key)  { ec_private_to_public(private_key) }
       let(:comment)     { "asdf" }
       let(:message)     { "hello, world!" }
 
