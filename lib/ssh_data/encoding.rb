@@ -424,7 +424,7 @@ module SSHData
       [hash, total_read]
     end
 
-    # Encode the series of fiends into a binary string.
+    # Encode the series of fields into a binary string.
     #
     # fields - A series of Arrays, each containing a Symbol type and a value to
     #          encode.
