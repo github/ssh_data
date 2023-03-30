@@ -21,9 +21,9 @@ module SSHData
 
       # Import an openssl private key.
       #
-      # key - An OpenSSL::PKey::DSA instance.
+      # key - An OpenSSL::PKey::RSA instance.
       #
-      # Returns a DSA instance.
+      # Returns a RSA instance.
       def self.from_openssl(key)
         new(
           algo: PublicKey::ALGO_RSA,
