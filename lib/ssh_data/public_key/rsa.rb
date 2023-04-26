@@ -37,6 +37,12 @@ module SSHData
           raise DecodeError, "bad signature algorithm: #{sig_algo.inspect}"
         end
 
+        # OpenSSH compatibility: if a the number of bytes in the signature is less than the number of bytes of the RSA
+        # modulus, prepend the signature with zeros.
+        # See https://github.com/openssh/openssh-portable/blob/ac383f3a5c6f529a2e8a5bc44af79a08c7da294e/ssh-rsa.c#L531
+        difference = n.num_bytes - raw_sig.bytesize
+        raw_sig = "\0" * difference + raw_sig if difference.positive?
+
         openssl.verify(digest.new, raw_sig, signed_data)
       end
 
