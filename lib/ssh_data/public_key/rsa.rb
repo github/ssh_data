@@ -18,8 +18,8 @@ module SSHData
         @e = e
         @n = n
 
-        @openssl = OpenSSL::PKey::RSA.new(asn1.to_der)
-
+        @openssl = OpenSSL::PKey::RSA.new
+        @openssl.set_key(n, e, nil)
         super(algo: algo)
       end
 
