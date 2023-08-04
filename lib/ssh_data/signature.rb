@@ -108,6 +108,10 @@ module SSHData
     # If the signature was created from a certificate, this will be an
     # SSHData::Certificate. Otherwise, this will be a PublicKey algorithm.
     def public_key
+      @data_public_key ||= load_public_key
+    end
+
+    private def load_public_key
       public_key_algorithm, _ = Encoding.decode_string(@publickey)
 
       if PublicKey::ALGOS.include?(public_key_algorithm)
