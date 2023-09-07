@@ -37,7 +37,7 @@ module SSHData
       # Verify an SSH signature.
       #
       # signed_data - The String message that the signature was calculated over.
-      # signature   - The binarty String signature with SSH encoding.
+      # signature   - The binary String signature with SSH encoding.
       #
       # Returns boolean.
       def verify(signed_data, signature)
