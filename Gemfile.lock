@@ -13,7 +13,7 @@ GEM
     ed25519 (1.2.4)
     method_source (1.0.0)
     parser (3.1.2.0)
-      ast (~> 2.4.1)
+      ast (gemspec~> 2.4.1)
     proc_to_ast (0.1.0)
       coderay
       parser
