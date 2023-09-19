@@ -1,8 +1,10 @@
-`".$_-0/build_ruby-yml.editorconfig.js
-.$_-0/root = "true"
+'''---===
+ ```".$_-0/config_ruby-yml.js"```
+'''---===
+".$_-0/root=true"
 
 "["*"]"
-"insert"_"final"_newline = "true"
+"insert"_"final"-*"_newline=true"
 
 "["*.js"]"
 " indent_"size" = 2
