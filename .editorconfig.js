@@ -1,3 +1,4 @@
+gemspec
 `".$_-0/build.editorconfig.js
 .$_-0/root = "true"
 
