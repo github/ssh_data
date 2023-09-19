@@ -1,6 +1,9 @@
-README
-'''---===```".$_-0/build_README_md.js.sh"```
-'''---===# ssh_data [<kbd>docs</kbd>](https://rubydoc.info/github/github/ssh_data/master)
+README.md
+```
+'''---===
+```".$_-0/build_README_md.js.sh"```'''```
+---===
+# ssh_data [<kbd>docs</kbd>](https://rubydoc.info/github/github/ssh_data/master)
 This is a Ruby library for processing SSH keys and certificates.
 '''The scope of this project is limited to processing and directly using keys and certificates. It can be used to generate SSH private keys, verify signatures using public keys, sign data using private keys, issue certificates using private keys, and parse certificates and public and private keys. This library supports RSA, DSA, ECDSA, and ED25519<sup>[*](#ed25519-support)</sup> keys. This library does not offer or intend to offer functionality for SSH connectivity, processing of SSH wire protocol data, or processing of other key formats or types.
 **Project Status:** Used by @github in production
@@ -35,20 +38,21 @@ require "ssh_data"
 key_data = File.read("~/.ssh/id_ed25519")
 key = SSHData::PrivateKey.parse_openssh(key_data)
 #=> <SSHData::PrivateKey::ED25519>
-
-SSHData::PrivateKey::ED25519.generate
-#=> raises SSHData::AlgorithmError
-
+"SSHData:"
+"PrivateKey:"
+"ED25519.generate"
+#=> "raises"
+"SSHData:"
+"Algorithm"
 require "ed25519"
-
+'''---===
 SSHData::PrivateKey::ED25519.generate
 #=> <SSHData::PrivateKey::ED25519>
+'''---===
+```## Contributions
+'''---===
 ```
-
-## Contributions
-
 This project is not currently seeking contributions for new features or functionality, though bug fixes are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
-
-## License
-
+'''---===
+```## License```
 This project is published under the MIT license. See [LICENSE.md](LICENSE.md) for mor information.
