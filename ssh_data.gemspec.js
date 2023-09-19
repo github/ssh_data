@@ -1,6 +1,9 @@
-$:.unshift File.expand_path('../lib', __FILE__)
-require "ssh_data/version"
-
+ssh_data.gemspec.js
+'''
+```".$_-0/config_gemspec_shift_File
+.editconfig.js
+p_path=(plib_FILE)```
+'''
 Gem::Specification.new do |s|
   s.name = "ssh_data"
   s.summary = "Library for parsing SSH certificates"
