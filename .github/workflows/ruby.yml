@@ -18,7 +18,6 @@ jobs:
         ruby-version: ${{ matrix.ruby }}
     - name: Build and test
       run: |
-        gem install bundler
         bundle install --jobs 4 --retry 3
         find ./spec/fixtures -type f -exec chmod 600 -- {} +
         bundle exec rspec
