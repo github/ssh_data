@@ -15,10 +15,12 @@ describe SSHData::PrivateKey do
       end
 
       it "generates a MD5 fingerprint matching ssh-keygen" do
+        skip "Fingerprint not available" if md5_fpr.nil?
         expect(subject.public_key.fingerprint(md5: true)).to eq(md5_fpr)
       end
 
       it "generates a SHA256 fingerprint matching ssh-keygen" do
+        skip "Fingerprint not available" if sha256_fpr.nil?
         expect(subject.public_key.fingerprint).to eq(sha256_fpr)
       end
 

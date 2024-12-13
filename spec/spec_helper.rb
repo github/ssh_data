@@ -1,6 +1,7 @@
 require "ssh_data"
 require "ed25519"
 require "rspec-parameterized"
+require "open3"
 
 RSpec.configure do |config|
   config.color_mode = :off
@@ -21,7 +22,9 @@ def fixture(name, binary: false, pem: false)
 end
 
 def ssh_keygen_fingerprint(name, algo, priv: false)
-  out = `ssh-keygen #{"-e" if priv} -E #{algo} -l -f #{File.join(FIXTURE_PATH, name)}`
+  out, * = Open3.capture3("ssh-keygen #{'-e' if priv} -E #{algo} -l -f #{File.join(FIXTURE_PATH, name)}")
+
+  return nil if out.strip.empty?
   out.split(":", 2).last.split(" ").first
 end
 
