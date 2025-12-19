@@ -1,8 +1,9 @@
 require_relative "../spec_helper"
 
 describe SSHData::PrivateKey::ED25519 do
-  let(:signing_key) { Ed25519::SigningKey.generate }
-  let(:verify_key)  { signing_key.verify_key }
+  let(:signing_key) { OpenSSL::PKey.generate_key("ED25519") }
+  let(:verify_key)  { OpenSSL::PKey.read(signing_key.public_to_pem) }
+
   let(:comment)     { "asdf" }
   let(:message)     { "hello, world!" }
   let(:cert_key)    { SSHData::PrivateKey::DSA.generate.public_key }
@@ -12,8 +13,8 @@ describe SSHData::PrivateKey::ED25519 do
   subject do
     described_class.new(
       algo: SSHData::PublicKey::ALGO_ED25519,
-      pk: verify_key.to_bytes,
-      sk: signing_key.to_bytes + verify_key.to_bytes,
+      pk: verify_key.raw_public_key,
+      sk: signing_key.raw_private_key + verify_key.raw_public_key,
       comment: comment,
     )
   end
@@ -54,22 +55,22 @@ describe SSHData::PrivateKey::ED25519 do
   end
 
   it "has params" do
-    expect(subject.pk).to eq(verify_key.to_bytes)
-    expect(subject.sk).to eq(signing_key.to_bytes + verify_key.to_bytes)
+    expect(subject.pk).to eq(verify_key.raw_public_key)
+    expect(subject.sk).to eq(signing_key.raw_private_key + verify_key.raw_public_key)
   end
 
   it "has a comment" do
     expect(subject.comment).to eq(comment)
   end
 
-  it "has an Ed25519 representation" do
-    expect(subject.ed25519_key).to be_a(Ed25519::SigningKey)
-    expect(subject.ed25519_key.to_bytes).to eq(signing_key.to_bytes)
+  it "has an PKey representation" do
+    expect(subject.openssl).to be_a(OpenSSL::PKey::PKey)
+    expect(subject.openssl.raw_private_key).to eq(signing_key.raw_private_key)
   end
 
   it "has a public key" do
-    expect(subject.public_key).to be_a(SSHData::PublicKey::ED25519)
-    expect(subject.public_key.ed25519_key.to_bytes).to eq(verify_key.to_bytes)
+    expect(subject.openssl).to be_a(OpenSSL::PKey::PKey)
+    expect(subject.public_key.openssl.raw_public_key).to eq(verify_key.raw_public_key)
   end
 
   it "can parse openssh-generate keys" do
@@ -77,28 +78,5 @@ describe SSHData::PrivateKey::ED25519 do
     expect(keys).to be_an(Array)
     expect(keys.size).to eq(1)
     expect(keys.first).to be_an(SSHData::PrivateKey::ED25519)
-  end
-
-  it "fails cleanly if the ed25519 gem hasn't been loaded" do
-    backup = Object.send(:remove_const, :Ed25519)
-    key = openssh_key.first
-
-    begin
-      expect {
-        expect(key.sk).not_to be_nil
-        expect(key.pk).not_to be_nil
-        expect(key.public_key).not_to be_nil
-      }.not_to raise_error
-
-      expect {
-        described_class.generate
-      }.to raise_error(SSHData::AlgorithmError)
-
-      expect {
-        key.sign(message)
-      }.to raise_error(SSHData::AlgorithmError)
-    ensure
-      Object.const_set(:Ed25519, backup)
-    end
   end
 end

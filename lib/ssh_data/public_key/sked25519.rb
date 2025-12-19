@@ -25,7 +25,6 @@ module SSHData
       end
 
       def verify(signed_data, signature, **opts)
-        self.class.ed25519_gem_required!
         opts = DEFAULT_SK_VERIFY_OPTS.merge(opts)
         unknown_opts = opts.keys - DEFAULT_SK_VERIFY_OPTS.keys
         raise UnsupportedError, "Verification options #{unknown_opts.inspect} are not supported." unless unknown_opts.empty?
@@ -36,12 +35,7 @@ module SSHData
           raise DecodeError, "bad signature algorithm: #{sig_algo.inspect}"
         end
 
-        result = begin
-            ed25519_key.verify(raw_sig, blob)
-          rescue Ed25519::VerifyError
-            false
-          end
-
+        result = openssl.verify(nil, raw_sig, blob)
         # We don't know that the flags are correct until after we've validated the signature
         # which embeds the flags, so always verify the signature first.
         return false if opts[:user_presence_required] && (sk_flags & SK_FLAG_USER_PRESENCE != SK_FLAG_USER_PRESENCE)

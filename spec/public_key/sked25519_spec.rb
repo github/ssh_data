@@ -1,8 +1,8 @@
 require_relative "../spec_helper"
 
 describe SSHData::PublicKey::SKED25519 do
-  let(:signing_key) { Ed25519::SigningKey.generate }
-  let(:verify_key)  { signing_key.verify_key }
+  let(:signing_key) { OpenSSL::PKey.generate_key("ED25519") }
+  let(:verify_key)  { OpenSSL::PKey.read(signing_key.public_to_pem) }
 
   let(:msg)     { "hello, world!" }
   let(:raw_sig) { signing_key.sign(msg) }
@@ -14,7 +14,7 @@ describe SSHData::PublicKey::SKED25519 do
   subject do
     described_class.new(
       algo: SSHData::PublicKey::ALGO_SKED25519,
-      pk: verify_key.to_bytes,
+      pk: verify_key.raw_public_key,
       application: application
     )
   end
@@ -22,7 +22,7 @@ describe SSHData::PublicKey::SKED25519 do
   it "is equal to keys with the same params" do
     expect(subject).to eq(described_class.new(
       algo: SSHData::PublicKey::ALGO_SKED25519,
-      pk: verify_key.to_bytes,
+      pk: verify_key.raw_public_key,
       application: application
     ))
   end
@@ -30,12 +30,12 @@ describe SSHData::PublicKey::SKED25519 do
   it "isnt equal to keys with different params" do
     expect(subject).not_to eq(described_class.new(
       algo: SSHData::PublicKey::ALGO_SKED25519,
-      pk: verify_key.to_bytes.reverse,
+      pk: verify_key.raw_public_key.reverse,
       application: application
     ))
     expect(subject).not_to eq(described_class.new(
       algo: SSHData::PublicKey::ALGO_SKED25519,
-      pk: verify_key.to_bytes,
+      pk: verify_key.raw_public_key,
       application: "something else"
     ))
   end
@@ -45,16 +45,16 @@ describe SSHData::PublicKey::SKED25519 do
   end
 
   it "has parameters" do
-    expect(subject.pk).to eq(verify_key.to_bytes)
+    expect(subject.pk).to eq(verify_key.raw_public_key)
   end
 
   it "has application" do
     expect(subject.application).to eq(application)
   end
 
-  it "has an Ed25519 representation" do
-    expect(subject.ed25519_key).to be_a(Ed25519::VerifyKey)
-    expect(subject.ed25519_key.to_bytes).to eq(verify_key.to_bytes)
+  it "has a PKey representation" do
+    expect(subject.openssl).to be_a(OpenSSL::PKey::PKey)
+    expect(subject.openssl.raw_public_key).to eq(verify_key.raw_public_key)
   end
 
   it "can be rencoded" do

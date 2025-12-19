@@ -1,26 +1,25 @@
 module SSHData
   module PrivateKey
     class ED25519 < Base
-      attr_reader :pk, :sk, :ed25519_key
+      attr_reader :pk, :sk, :openssl
 
       # Generate a new private key.
       #
       # Returns a PublicKey::Base subclass instance.
       def self.generate
-        PublicKey::ED25519.ed25519_gem_required!
-        from_ed25519(Ed25519::SigningKey.generate)
+        from_openssl(OpenSSL::PKey.generate_key("ED25519"))
       end
 
-      # Create from a ::Ed25519::SigningKey instance.
+      # Create from a ::OpenSSL::PKey::PKey instance.
       #
-      # key - A ::Ed25519::SigningKey instance.
+      # key - A ::OpenSSL::PKey::PKey instance.
       #
       # Returns a ED25519 instance.
-      def self.from_ed25519(key)
+      def self.from_openssl(key)
         new(
           algo: PublicKey::ALGO_ED25519,
-          pk: key.verify_key.to_bytes,
-          sk: key.to_bytes + key.verify_key.to_bytes,
+          pk: key.raw_public_key,
+          sk: key.raw_private_key + key.raw_public_key,
           comment: "",
         )
       end
@@ -40,12 +39,10 @@ module SSHData
 
         super(algo: algo, comment: comment)
 
-        if PublicKey::ED25519.enabled?
-          @ed25519_key = Ed25519::SigningKey.new(sk.byteslice(0, 32))
+        @openssl = OpenSSL::PKey.read(raw_to_private_key_info_der(sk.byteslice(0, 32)))
 
-          if @ed25519_key.verify_key.to_bytes != pk
-            raise DecodeError, "bad pk"
-          end
+        if @openssl.raw_public_key != pk
+          raise DecodeError, "bad pk"
         end
 
         @public_key = PublicKey::ED25519.new(algo: algo, pk: pk)
@@ -57,11 +54,23 @@ module SSHData
       #
       # Returns a binary String signature.
       def sign(signed_data, algo: nil)
-        PublicKey::ED25519.ed25519_gem_required!
         algo ||= self.algo
         raise AlgorithmError unless algo == self.algo
-        raw_sig = ed25519_key.sign(signed_data)
+        raw_sig = openssl.sign(nil, signed_data)
         Encoding.encode_signature(algo, raw_sig)
+      end
+
+      private
+
+      def raw_to_private_key_info_der(key)
+        inner_octet_string = OpenSSL::ASN1::OctetString.new(key)
+        private_key_field = OpenSSL::ASN1::OctetString.new(inner_octet_string.to_der)
+        version = OpenSSL::ASN1::Integer.new(0)
+        OpenSSL::ASN1::Sequence.new([
+          version,
+          PublicKey::ED25519.asn_algorithm_identifier,
+          private_key_field
+        ]).to_der
       end
     end
   end

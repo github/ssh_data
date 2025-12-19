@@ -1,5 +1,4 @@
 require "ssh_data"
-require "ed25519"
 require "rspec-parameterized"
 require "open3"
 
