@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
     - name: Set up Ruby ${{ matrix.ruby }}
-      uses: ruby/setup-ruby@762794c140bbeda0f1224786aa33b4b46783a6c1
+      uses: ruby/setup-ruby@14594264cd68ce8a2345dd349bc3d138a4ef85c8
       with:
         ruby-version: ${{ matrix.ruby }}
     - name: Build and test
