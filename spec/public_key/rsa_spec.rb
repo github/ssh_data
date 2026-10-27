@@ -55,6 +55,12 @@ describe SSHData::PublicKey::RSA do
     expect(subject.verify("wrong", sig)).to be(false)
   end
 
+  it "rejects signatures with trailing data" do
+    expect {
+      subject.verify(msg, sig + "\0")
+    }.to raise_error(SSHData::DecodeError, "unexpected trailing data")
+  end
+
   it "can verify a diminished signature" do
     diminished_signature_hex =
       "0000000c7273612d736861322d323536000000ff897e8dc2fe891236d4378c10" +
