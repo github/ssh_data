@@ -38,6 +38,17 @@ describe SSHData::Certificate do
     }.to raise_error(SSHData::DecodeError)
   end
 
+  ["rsa", "dsa", "ecdsa", "ed25519"].each do |ca|
+    it "raises on trailing data inside a #{ca} certificate signature" do
+      cert = described_class.parse_openssh(fixture("rsa_leaf_for_#{ca}_ca-cert.pub"))
+      cert.signature << "\0"
+
+      expect {
+        described_class.parse_rfc4253(cert.rfc4253)
+      }.to raise_error(SSHData::DecodeError, "unexpected trailing data")
+    end
+  end
+
   it "raises on type mismatch" do
     _, b64, comment = fixture("rsa_leaf_for_rsa_ca-cert.pub").split(" ", 3)
     cert = [SSHData::Certificate::ALGO_ED25519, b64, comment].join(" ")

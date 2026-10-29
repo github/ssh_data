@@ -30,7 +30,9 @@ module SSHData
       #
       # Returns boolean.
       def verify(signed_data, signature)
-        sig_algo, raw_sig, _ = Encoding.decode_signature(signature)
+        sig_algo, raw_sig, read = Encoding.decode_signature(signature)
+        raise DecodeError, "unexpected trailing data" if read != signature.bytesize
+
         digest = ALGO_DIGESTS[sig_algo]
 
         if digest.nil?

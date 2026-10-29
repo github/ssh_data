@@ -43,7 +43,9 @@ module SSHData
       def verify(signed_data, signature)
         self.class.ed25519_gem_required!
 
-        sig_algo, raw_sig, _ = Encoding.decode_signature(signature)
+        sig_algo, raw_sig, read = Encoding.decode_signature(signature)
+        raise DecodeError, "unexpected trailing data" if read != signature.bytesize
+
         if sig_algo != self.class.algorithm_identifier
           raise DecodeError, "bad signature algorithm: #{sig_algo.inspect}"
         end

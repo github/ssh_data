@@ -82,6 +82,12 @@ describe SSHData::PublicKey::DSA do
     expect(subject.verify("wrong", sig)).to be(false)
   end
 
+  it "rejects signatures with trailing data" do
+    expect {
+      subject.verify(msg, sig + "\0")
+    }.to raise_error(SSHData::DecodeError, "unexpected trailing data")
+  end
+
   it "can parse openssh-generate keys" do
     expect { openssh_key }.not_to raise_error
   end

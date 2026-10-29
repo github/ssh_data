@@ -99,6 +99,12 @@ describe SSHData::PublicKey::ECDSA do
         expect(subject.verify("wrong", sig)).to be(false)
       end
 
+      it "rejects signatures with trailing data" do
+        expect {
+          subject.verify(msg, sig + "\0")
+        }.to raise_error(SSHData::DecodeError, "unexpected trailing data")
+      end
+
       it "blows up parsing malformed keys" do
         malformed = [algo, Base64.strict_encode64([
           SSHData::Encoding.encode_string(algo),

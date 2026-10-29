@@ -97,7 +97,9 @@ module SSHData
       #
       # Returns boolean.
       def verify(signed_data, signature)
-        sig_algo, ssh_sig, _ = Encoding.decode_signature(signature)
+        sig_algo, ssh_sig, read = Encoding.decode_signature(signature)
+        raise DecodeError, "unexpected trailing data" if read != signature.bytesize
+
         if sig_algo != "ecdsa-sha2-#{curve}"
           raise DecodeError, "bad signature algorithm: #{sig_algo.inspect}"
         end
